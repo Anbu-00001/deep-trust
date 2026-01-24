@@ -2,11 +2,41 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+export interface HeatmapRegion {
+  x: number;
+  y: number;
+  radius: number;
+  intensity: number;
+  label?: string;
+}
+
+export interface AnomalyRegion {
+  start: number;
+  end: number;
+  severity: "low" | "medium" | "high";
+}
+
+export interface FrameData {
+  frameNumber: number;
+  timestamp: number;
+  confidence: number;
+  anomalyType?: "face_warp" | "temporal_inconsistency" | "lighting_mismatch" | "edge_artifact" | null;
+}
+
+export interface ModalityScore {
+  modality: "visual" | "audio" | "temporal" | "structural";
+  score: number;
+  weight: number;
+  confidence: number;
+  findings: string[];
+}
+
 export interface AnalysisResult {
   trustScore: number;
   riskLevel: "low" | "medium" | "high";
   verdict: string;
   analysisTime: number;
+  mediaType: "image" | "video" | "audio";
   observations: {
     type: "positive" | "neutral" | "concern";
     title: string;
@@ -25,6 +55,10 @@ export interface AnalysisResult {
     suspiciousNodes: number;
     graphCoherence: number;
   };
+  heatmapRegions: HeatmapRegion[];
+  audioAnomalies: AnomalyRegion[];
+  frameAnalysis: FrameData[];
+  modalityScores: ModalityScore[];
 }
 
 export const useMediaAnalysis = () => {

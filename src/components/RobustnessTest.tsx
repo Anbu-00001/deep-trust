@@ -11,6 +11,7 @@ interface TestResult {
 
 interface RobustnessTestProps {
   results?: TestResult[];
+  compact?: boolean;
 }
 
 const defaultResults: TestResult[] = [
@@ -51,7 +52,7 @@ const defaultResults: TestResult[] = [
   }
 ];
 
-const RobustnessTest = ({ results = defaultResults }: RobustnessTestProps) => {
+const RobustnessTest = ({ results = defaultResults, compact = false }: RobustnessTestProps) => {
   const getStatusIcon = (status: TestResult["status"]) => {
     switch (status) {
       case "pass":
@@ -81,6 +82,20 @@ const RobustnessTest = ({ results = defaultResults }: RobustnessTestProps) => {
   };
 
   const passCount = results.filter(r => r.status === "pass").length;
+
+  if (compact) {
+    return (
+      <div className="space-y-2">
+        <h5 className="text-sm font-medium text-muted-foreground">Robustness</h5>
+        {results.slice(0, 3).map((result) => (
+          <div key={result.mode} className="flex items-center justify-between text-xs">
+            <span className="text-muted-foreground">{result.mode}</span>
+            <span className={getDriftColor(result.drift)}>{result.drift}%</span>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
