@@ -9,7 +9,11 @@ interface TestResult {
   status: "pass" | "warning" | "fail";
 }
 
-const testResults: TestResult[] = [
+interface RobustnessTestProps {
+  results?: TestResult[];
+}
+
+const defaultResults: TestResult[] = [
   {
     mode: "Clean",
     description: "Baseline reference analysis",
@@ -47,7 +51,7 @@ const testResults: TestResult[] = [
   }
 ];
 
-const RobustnessTest = () => {
+const RobustnessTest = ({ results = defaultResults }: RobustnessTestProps) => {
   const getStatusIcon = (status: TestResult["status"]) => {
     switch (status) {
       case "pass":
@@ -76,15 +80,17 @@ const RobustnessTest = () => {
     return "text-trust-low";
   };
 
+  const passCount = results.filter(r => r.status === "pass").length;
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold">Robustness Analysis</h3>
-        <span className="text-sm text-muted-foreground">5 tests completed</span>
+        <span className="text-sm text-muted-foreground">{results.length} tests completed</span>
       </div>
 
       <div className="space-y-3">
-        {testResults.map((result, index) => (
+        {results.map((result, index) => (
           <div
             key={result.mode}
             className={cn(
@@ -114,13 +120,13 @@ const RobustnessTest = () => {
             <div className="flex items-center gap-8">
               <div className="text-right">
                 <div className="text-sm text-muted-foreground">Confidence</div>
-                <div className="font-mono font-medium">{result.confidence}%</div>
+                <div className="font-mono font-medium">{Math.round(result.confidence)}%</div>
               </div>
               
               <div className="text-right min-w-[60px]">
                 <div className="text-sm text-muted-foreground">Drift</div>
                 <div className={cn("font-mono font-medium", getDriftColor(result.drift))}>
-                  {result.drift > 0 ? "+" : ""}{result.drift}%
+                  {result.drift > 0 ? "+" : ""}{Math.round(result.drift)}%
                 </div>
               </div>
             </div>
@@ -131,11 +137,15 @@ const RobustnessTest = () => {
       {/* Summary */}
       <div className="mt-6 p-4 rounded-lg bg-secondary/50 border border-border">
         <div className="flex items-center gap-3">
-          <div className="w-2 h-2 rounded-full bg-trust-high animate-pulse" />
+          <div className={cn(
+            "w-2 h-2 rounded-full animate-pulse",
+            passCount >= 4 ? "bg-trust-high" : passCount >= 2 ? "bg-trust-medium" : "bg-trust-low"
+          )} />
           <span className="text-sm">
             <span className="font-medium">Overall Robustness:</span>{" "}
             <span className="text-muted-foreground">
-              Confidence remains stable across 4/5 test conditions. Motion blur shows expected degradation.
+              Confidence remains stable across {passCount}/{results.length} test conditions.
+              {results.some(r => r.status === "warning") && " Some conditions show expected degradation."}
             </span>
           </span>
         </div>
