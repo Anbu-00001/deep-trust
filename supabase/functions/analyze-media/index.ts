@@ -34,12 +34,35 @@ interface ModalityScore {
   findings: string[];
 }
 
+interface GanFingerprints {
+  detected: boolean;
+  patterns: string[];
+  confidence: number;
+}
+
+interface TextureAnalysis {
+  laplacianVariance: "low" | "normal" | "high";
+  smoothnessAnomalies: boolean;
+  noiseConsistency: "consistent" | "inconsistent" | "suspicious";
+}
+
+interface MetadataAnalysis {
+  hasMetadata: boolean;
+  suspicious: boolean;
+  findings: string[];
+}
+
 interface AnalysisResult {
   trustScore: number;
   riskLevel: "low" | "medium" | "high";
   verdict: string;
   analysisTime: number;
   mediaType: "image" | "video" | "audio";
+  uncertaintyFlag: boolean;
+  uncertaintyReason: string;
+  ganFingerprints: GanFingerprints;
+  textureAnalysis: TextureAnalysis;
+  metadataAnalysis: MetadataAnalysis;
   observations: {
     type: "positive" | "neutral" | "concern";
     title: string;
@@ -88,43 +111,90 @@ serve(async (req) => {
     // Determine media type
     const detectedMediaType = mediaType === "video" ? "video" : mediaType === "audio" ? "audio" : "image";
 
-    // Create comprehensive analysis prompt
-    const systemPrompt = `You are a world-class forensic media analyst specializing in deepfake detection, AI-generated content identification, and digital media authentication. Perform an exhaustive multi-modal analysis of the provided media.
+    // Create comprehensive analysis prompt with advanced forensic techniques
+    const systemPrompt = `You are a world-class forensic media analyst specializing in deepfake detection, AI-generated content identification, and digital media authentication. Perform an exhaustive multi-modal ensemble analysis of the provided media.
+
+## CRITICAL: ENSEMBLE PREPROCESSING ANALYSIS
+Analyze the image as if you were examining multiple preprocessed variations simultaneously:
+1. **Original View**: Analyze at native resolution
+2. **Downscaled View**: Consider how artifacts appear at half resolution (GAN artifacts often become more visible)
+3. **Blur-Filtered View**: Examine if manipulation artifacts persist through gaussian blur
+4. **Histogram-Equalized View**: Check if lighting/contrast normalization reveals hidden inconsistencies
+
+Combine findings from all virtual "views" to reach a consensus verdict.
 
 ## ANALYSIS METHODOLOGY
 
 ### 1. Visual Forensics (Primary)
-- **Facial Analysis**: Examine facial geometry, eye reflections, teeth consistency, skin texture, pore patterns, hair boundaries
-- **Lighting Analysis**: Check for inconsistent shadows, impossible light sources, reflection mismatches
-- **Compression Artifacts**: Identify unusual JPEG/video compression patterns, block artifacts in specific regions
-- **Edge Detection**: Analyze boundaries around face, hair, objects for manipulation artifacts
-- **Color Analysis**: Check for color inconsistencies, unusual gradients, saturation anomalies
+- **Facial Analysis**: Examine facial geometry, eye reflections (corneal reflections must match), teeth consistency, skin texture, pore patterns, hair boundaries
+- **Lighting Analysis**: Check for inconsistent shadows, impossible light sources, reflection mismatches across face regions
+- **Compression Artifacts**: Identify unusual JPEG/video compression patterns, block artifacts localized to specific regions (sign of splicing)
+- **Edge Detection**: Analyze boundaries around face, hair, objects for blending/feathering artifacts
+- **Color Analysis**: Check for color inconsistencies, unusual gradients, saturation anomalies between face and background
 
-### 2. Structural Analysis
-- **Geometric Consistency**: Verify facial landmark positions and proportions
-- **Perspective Analysis**: Check for perspective errors in face-to-background relationships
-- **Symmetry Analysis**: Evaluate unnatural symmetry that may indicate AI generation
+### 2. GAN FINGERPRINTING MODULE (CRITICAL)
+Deepfake generators leave characteristic fingerprints. Specifically check for:
+- **Grid Patterns**: Regular grid-like artifacts from GAN upsampling layers
+- **Checkerboard Artifacts**: Common in transposed convolution outputs
+- **Texture Repetition**: Repeated micro-patterns in skin, hair, or background
+- **Frequency Domain Anomalies**: Unusual periodic patterns in high-frequency components
+- **Color Banding**: Subtle color quantization in gradient areas
+- **Generator-Specific Tells**: StyleGAN ear asymmetry, FaceSwap edge halos, DeepFaceLab blending artifacts
 
-### 3. GAN/Diffusion Artifact Detection
-- **Pattern Recognition**: Identify characteristic GAN artifacts (grid patterns, texture repetition)
-- **Frequency Analysis**: Detect unusual frequency domain signatures
-- **Semantic Inconsistencies**: Identify illogical elements (wrong number of fingers, text errors, impossible physics)
+### 3. TEXTURE CONSISTENCY ANALYSIS
+Evaluate texture uniformity using Laplacian variance principles:
+- **Too-Smooth Regions**: AI generators often produce unnaturally smooth skin to hide artifacts
+- **Inconsistent Sharpness**: Different sharpness levels between face and background
+- **Micro-Texture Patterns**: Natural skin has consistent pore/texture patterns; fakes often have uniform or missing micro-details
+- **Noise Distribution**: Natural photos have uniform sensor noise; deepfakes often have inconsistent noise patterns
 
-### 4. Heatmap Generation (Grad-CAM Style)
-Generate attention regions indicating areas of concern. For each suspicious region, provide:
+### 4. METADATA & ENCODING SIGNATURE ANALYSIS
+- **Missing EXIF Data**: Deepfakes often strip or have incomplete metadata
+- **Inconsistent Encoding**: Mismatched quality settings or unusual encoder signatures
+- **Double Compression Artifacts**: Signs of re-encoding (save-load-save patterns)
+- **Timestamp Anomalies**: Creation date vs modification date inconsistencies
+
+### 5. Structural Geometric Analysis
+- **Facial Landmark Consistency**: Verify all 68+ facial landmarks are in anatomically correct positions
+- **Perspective Coherence**: Check face-to-background perspective alignment
+- **Bilateral Symmetry**: Evaluate for unnatural perfect symmetry (AI tendency) vs natural asymmetry
+- **Proportional Analysis**: Golden ratio and anthropometric measurements
+
+### 6. Heatmap Generation (Grad-CAM Style)
+Generate attention regions indicating areas of concern:
 - Normalized coordinates (0-400 for x, 0-280 for y)
 - Radius of the suspicious area
 - Intensity (0-1, where higher = more suspicious)
-- Label if notable
+- Label with specific artifact type detected
 
-### 5. Multi-Modal Scoring
-Provide separate scores for each analysis modality with confidence levels.
+### 7. Confidence Calibration
+CRITICAL: Be honest about uncertainty. If score is between 40-70, you MUST:
+- Set uncertaintyFlag to true
+- Provide specific reasons why certainty is limited
+- Suggest what additional analysis might help
 
 ## OUTPUT FORMAT
 Respond with ONLY a valid JSON object:
 {
   "trustScore": <0-100, be precise and justify>,
   "verdict": "<2-5 word summary>",
+  "uncertaintyFlag": <boolean - TRUE if score between 40-70 or analysis is inconclusive>,
+  "uncertaintyReason": "<explanation if uncertain, empty string if confident>",
+  "ganFingerprints": {
+    "detected": <boolean>,
+    "patterns": ["<pattern1>", "<pattern2>"],
+    "confidence": <50-100>
+  },
+  "textureAnalysis": {
+    "laplacianVariance": "low" | "normal" | "high",
+    "smoothnessAnomalies": <boolean>,
+    "noiseConsistency": "consistent" | "inconsistent" | "suspicious"
+  },
+  "metadataAnalysis": {
+    "hasMetadata": <boolean>,
+    "suspicious": <boolean>,
+    "findings": ["<finding1>"]
+  },
   "observations": [
     {
       "type": "positive" | "concern" | "neutral",
@@ -145,7 +215,7 @@ Respond with ONLY a valid JSON object:
     "graphCoherence": <50-100>
   },
   "heatmapData": [
-    {"x": <50-350>, "y": <30-250>, "radius": <15-50>, "intensity": <0.1-1.0>, "label": "<optional>"}
+    {"x": <50-350>, "y": <30-250>, "radius": <15-50>, "intensity": <0.1-1.0>, "label": "<artifact type>"}
   ],
   "audioFindings": {
     "hasAudio": <boolean>,
@@ -161,20 +231,22 @@ Respond with ONLY a valid JSON object:
   "modalityBreakdown": {
     "visual": {"score": <0-100>, "confidence": <70-98>, "findings": ["<finding1>", "<finding2>"]},
     "structural": {"score": <0-100>, "confidence": <70-98>, "findings": ["<finding1>"]},
+    "ganFingerprint": {"score": <0-100>, "confidence": <70-98>, "findings": ["<finding1>"]},
+    "texture": {"score": <0-100>, "confidence": <70-98>, "findings": ["<finding1>"]},
     "audio": {"score": <0-100>, "confidence": <70-98>, "findings": ["<finding1>"]},
     "temporal": {"score": <0-100>, "confidence": <70-98>, "findings": ["<finding1>"]}
   }
 }
 
-## SCORING GUIDELINES
-- 90-100: Definitively authentic, no concerns
-- 75-89: Likely authentic, minor anomalies explainable by compression/quality
-- 60-74: Uncertain, some concerning patterns but not conclusive
-- 40-59: Suspicious, multiple manipulation indicators
-- 20-39: Highly likely manipulated/AI-generated
-- 0-19: Definitively synthetic with clear artifacts
+## SCORING GUIDELINES (BE CONSERVATIVE)
+- 90-100: Definitively authentic - clear metadata, consistent textures, no GAN fingerprints, natural noise patterns
+- 75-89: Likely authentic - minor anomalies fully explainable by compression/camera quality
+- 60-74: UNCERTAIN - set uncertaintyFlag=true - some concerning patterns but not conclusive
+- 40-59: UNCERTAIN - set uncertaintyFlag=true - multiple indicators present, manual review recommended
+- 20-39: Highly likely manipulated - clear GAN fingerprints, texture anomalies, or structural issues
+- 0-19: Definitively synthetic - multiple confirmed artifacts across analysis modalities
 
-Be rigorous, specific, and evidence-based. Avoid false positives on legitimate content while catching genuine manipulation.`;
+IMPORTANT: When uncertain (40-70 range), explicitly acknowledge limitations. Overconfidence in either direction is more harmful than admitting uncertainty.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -327,14 +399,34 @@ Be rigorous, specific, and evidence-based. Avoid false positives on legitimate c
       });
     }
 
-    // Build the complete result
+    // Build the complete result with enhanced forensic data
+    const trustScore = Math.min(100, Math.max(0, analysisData.trustScore || 50));
+    const uncertaintyFlag = analysisData.uncertaintyFlag || (trustScore >= 40 && trustScore <= 70);
+    
     const result: AnalysisResult = {
-      trustScore: Math.min(100, Math.max(0, analysisData.trustScore || 50)),
-      riskLevel: analysisData.trustScore >= 70 ? "low" : analysisData.trustScore >= 40 ? "medium" : "high",
+      trustScore,
+      riskLevel: trustScore >= 70 ? "low" : trustScore >= 40 ? "medium" : "high",
       verdict: analysisData.verdict || "Analysis Complete",
       analysisTime: Math.round(analysisTime * 10) / 10,
       mediaType: detectedMediaType,
-      observations: (analysisData.observations || []).slice(0, 6).map((obs: any) => ({
+      uncertaintyFlag,
+      uncertaintyReason: analysisData.uncertaintyReason || (uncertaintyFlag ? "Score in uncertain range - manual review recommended" : ""),
+      ganFingerprints: {
+        detected: analysisData.ganFingerprints?.detected || false,
+        patterns: analysisData.ganFingerprints?.patterns || [],
+        confidence: analysisData.ganFingerprints?.confidence || 75
+      },
+      textureAnalysis: {
+        laplacianVariance: analysisData.textureAnalysis?.laplacianVariance || "normal",
+        smoothnessAnomalies: analysisData.textureAnalysis?.smoothnessAnomalies || false,
+        noiseConsistency: analysisData.textureAnalysis?.noiseConsistency || "consistent"
+      },
+      metadataAnalysis: {
+        hasMetadata: analysisData.metadataAnalysis?.hasMetadata ?? true,
+        suspicious: analysisData.metadataAnalysis?.suspicious || false,
+        findings: analysisData.metadataAnalysis?.findings || []
+      },
+      observations: (analysisData.observations || []).slice(0, 8).map((obs: any) => ({
         type: obs.type || "neutral",
         title: obs.title || "Observation",
         description: obs.description || ""

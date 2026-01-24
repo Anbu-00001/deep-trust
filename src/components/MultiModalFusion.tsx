@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { cn } from "@/lib/utils";
 
 interface ModalityScore {
-  modality: "visual" | "audio" | "temporal" | "structural";
+  modality: "visual" | "audio" | "temporal" | "structural" | "ganFingerprint" | "texture";
   score: number;
   weight: number;
   confidence: number;
@@ -94,6 +94,8 @@ const MultiModalFusion = ({
       case "audio": return "🔊";
       case "temporal": return "⏱️";
       case "structural": return "🔷";
+      case "ganFingerprint": return "🔬";
+      case "texture": return "🧬";
     }
   };
 
@@ -103,6 +105,8 @@ const MultiModalFusion = ({
       case "audio": return "Audio Analysis";
       case "temporal": return "Temporal Coherence";
       case "structural": return "Structural Integrity";
+      case "ganFingerprint": return "GAN Fingerprint";
+      case "texture": return "Texture Consistency";
     }
   };
 

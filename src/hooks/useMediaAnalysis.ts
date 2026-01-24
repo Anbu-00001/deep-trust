@@ -24,10 +24,28 @@ export interface FrameData {
 }
 
 export interface ModalityScore {
-  modality: "visual" | "audio" | "temporal" | "structural";
+  modality: "visual" | "audio" | "temporal" | "structural" | "ganFingerprint" | "texture";
   score: number;
   weight: number;
   confidence: number;
+  findings: string[];
+}
+
+export interface GanFingerprints {
+  detected: boolean;
+  patterns: string[];
+  confidence: number;
+}
+
+export interface TextureAnalysis {
+  laplacianVariance: "low" | "normal" | "high";
+  smoothnessAnomalies: boolean;
+  noiseConsistency: "consistent" | "inconsistent" | "suspicious";
+}
+
+export interface MetadataAnalysis {
+  hasMetadata: boolean;
+  suspicious: boolean;
   findings: string[];
 }
 
@@ -37,6 +55,11 @@ export interface AnalysisResult {
   verdict: string;
   analysisTime: number;
   mediaType: "image" | "video" | "audio";
+  uncertaintyFlag: boolean;
+  uncertaintyReason: string;
+  ganFingerprints: GanFingerprints;
+  textureAnalysis: TextureAnalysis;
+  metadataAnalysis: MetadataAnalysis;
   observations: {
     type: "positive" | "neutral" | "concern";
     title: string;
