@@ -7,6 +7,8 @@ import FaceHeatmap from "./FaceHeatmap";
 import AudioSpectrogram from "./AudioSpectrogram";
 import FrameTimeline from "./FrameTimeline";
 import MultiModalFusion from "./MultiModalFusion";
+import UncertaintyIndicator from "./UncertaintyIndicator";
+import ForensicDetails from "./ForensicDetails";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useMediaAnalysis } from "@/hooks/useMediaAnalysis";
 
@@ -86,6 +88,14 @@ const DemoSection = () => {
                   <div className="flex justify-center py-4">
                     <TrustScoreMeter score={result.trustScore} size="lg" />
                   </div>
+                  
+                  {/* Uncertainty Indicator */}
+                  <UncertaintyIndicator 
+                    trustScore={result.trustScore}
+                    uncertaintyFlag={result.uncertaintyFlag}
+                    uncertaintyReason={result.uncertaintyReason}
+                    className="mt-4"
+                  />
                 </div>
               ) : null}
             </div>
@@ -95,8 +105,9 @@ const DemoSection = () => {
           {result && (
             <div className="mt-8 p-8 rounded-2xl bg-gradient-card border border-border animate-fade-in-up">
               <Tabs defaultValue="fusion" className="w-full">
-                <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 mb-8 h-auto">
+                <TabsList className="grid w-full grid-cols-4 md:grid-cols-7 mb-8 h-auto">
                   <TabsTrigger value="fusion" className="text-xs md:text-sm py-2">Multi-Modal</TabsTrigger>
+                  <TabsTrigger value="forensic" className="text-xs md:text-sm py-2">Forensic</TabsTrigger>
                   <TabsTrigger value="heatmap" className="text-xs md:text-sm py-2">Heatmap</TabsTrigger>
                   <TabsTrigger value="graph" className="text-xs md:text-sm py-2">Structure</TabsTrigger>
                   <TabsTrigger value="timeline" className="text-xs md:text-sm py-2">Timeline</TabsTrigger>
@@ -123,6 +134,40 @@ const DemoSection = () => {
                       </p>
                       <div className="pt-4 border-t border-border">
                         <RobustnessTest results={result.robustnessTests} compact />
+                      </div>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                {/* Forensic Details (GAN, Texture, Metadata) */}
+                <TabsContent value="forensic" className="mt-0">
+                  <div className="flex flex-col lg:flex-row items-start gap-8">
+                    <ForensicDetails
+                      ganFingerprints={result.ganFingerprints}
+                      textureAnalysis={result.textureAnalysis}
+                      metadataAnalysis={result.metadataAnalysis}
+                      className="flex-1"
+                    />
+                    <div className="lg:w-80 space-y-4">
+                      <h4 className="font-semibold">Advanced Forensic Detection</h4>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        Deep analysis using ensemble preprocessing, GAN fingerprinting, 
+                        texture consistency checks (Laplacian variance), and metadata 
+                        signature analysis to detect sophisticated manipulations.
+                      </p>
+                      <div className="space-y-2 text-sm pt-4 border-t border-border">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-mono text-muted-foreground">🔬</span>
+                          <span className="text-muted-foreground">GAN artifact detection</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-mono text-muted-foreground">🧬</span>
+                          <span className="text-muted-foreground">Texture uniformity analysis</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-mono text-muted-foreground">📄</span>
+                          <span className="text-muted-foreground">Metadata integrity check</span>
+                        </div>
                       </div>
                     </div>
                   </div>
