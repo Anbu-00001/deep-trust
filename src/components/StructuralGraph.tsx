@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 
 interface Node {
@@ -17,34 +17,38 @@ interface Edge {
 interface StructuralGraphProps {
   className?: string;
   animated?: boolean;
+  suspiciousCount?: number;
 }
 
-const StructuralGraph = ({ className, animated = true }: StructuralGraphProps) => {
+const StructuralGraph = ({ className, animated = true, suspiciousCount = 3 }: StructuralGraphProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [nodes] = useState<Node[]>(() => generateNodes());
-  const [edges] = useState<Edge[]>(() => generateEdges(nodes));
   const animationRef = useRef<number>();
   const [progress, setProgress] = useState(animated ? 0 : 1);
 
-  function generateNodes(): Node[] {
-    const nodeCount = 24;
+  // Generate nodes with suspiciousCount determining how many are marked
+  const { nodes, edges } = useMemo(() => {
+    const generatedNodes = generateNodes(suspiciousCount);
+    const generatedEdges = generateEdges(generatedNodes);
+    return { nodes: generatedNodes, edges: generatedEdges };
+  }, [suspiciousCount]);
+
+  function generateNodes(suspiciousNodeCount: number): Node[] {
     const nodes: Node[] = [];
     
-    // Generate nodes in a facial landmark-like pattern
     const centerX = 200;
     const centerY = 150;
     
-    // Eyes region
+    // Eyes region - left
     for (let i = 0; i < 6; i++) {
       nodes.push({
         id: i,
         x: centerX - 60 + (i % 3) * 30 + Math.random() * 10,
         y: centerY - 40 + Math.floor(i / 3) * 20 + Math.random() * 5,
-        suspicious: i === 2 // Mark one as suspicious
+        suspicious: suspiciousNodeCount > 0 && i === 2
       });
     }
     
-    // Right eye region
+    // Eyes region - right
     for (let i = 6; i < 12; i++) {
       nodes.push({
         id: i,
@@ -68,7 +72,7 @@ const StructuralGraph = ({ className, animated = true }: StructuralGraphProps) =
         id: i,
         x: centerX - 40 + ((i - 16) % 6) * 16 + Math.random() * 5,
         y: centerY + 60 + Math.sin((i - 16) * 0.5) * 10 + Math.random() * 5,
-        suspicious: i === 18 || i === 19
+        suspicious: suspiciousNodeCount > 1 && (i === 18 || (suspiciousNodeCount > 2 && i === 19))
       });
     }
     
@@ -82,7 +86,6 @@ const StructuralGraph = ({ className, animated = true }: StructuralGraphProps) =
   function generateEdges(nodes: Node[]): Edge[] {
     const edges: Edge[] = [];
     
-    // Connect nearby nodes
     for (let i = 0; i < nodes.length; i++) {
       for (let j = i + 1; j < nodes.length; j++) {
         const dist = Math.sqrt(
@@ -106,6 +109,7 @@ const StructuralGraph = ({ className, animated = true }: StructuralGraphProps) =
   useEffect(() => {
     if (!animated) return;
 
+    setProgress(0);
     const duration = 2000;
     const startTime = Date.now();
 
@@ -126,7 +130,7 @@ const StructuralGraph = ({ className, animated = true }: StructuralGraphProps) =
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [animated]);
+  }, [animated, suspiciousCount]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -140,7 +144,6 @@ const StructuralGraph = ({ className, animated = true }: StructuralGraphProps) =
     canvas.height = 300 * dpr;
     ctx.scale(dpr, dpr);
 
-    // Clear canvas
     ctx.clearRect(0, 0, 400, 300);
 
     // Draw grid
@@ -197,6 +200,8 @@ const StructuralGraph = ({ className, animated = true }: StructuralGraphProps) =
 
   }, [nodes, edges, progress]);
 
+  const actualSuspiciousCount = nodes.filter(n => n.suspicious).length;
+
   return (
     <div className={cn("relative", className)}>
       <canvas
@@ -213,7 +218,9 @@ const StructuralGraph = ({ className, animated = true }: StructuralGraphProps) =
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-destructive" />
-          <span className="text-muted-foreground">Suspicious Region</span>
+          <span className="text-muted-foreground">
+            Suspicious Region {actualSuspiciousCount > 0 && `(${actualSuspiciousCount})`}
+          </span>
         </div>
       </div>
     </div>

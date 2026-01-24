@@ -4,11 +4,12 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 interface MediaUploadProps {
-  onAnalyze: () => void;
+  onAnalyze: (file: File) => void;
   isAnalyzing: boolean;
+  onClear?: () => void;
 }
 
-const MediaUpload = ({ onAnalyze, isAnalyzing }: MediaUploadProps) => {
+const MediaUpload = ({ onAnalyze, isAnalyzing, onClear }: MediaUploadProps) => {
   const [isDragging, setIsDragging] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -57,6 +58,13 @@ const MediaUpload = ({ onAnalyze, isAnalyzing }: MediaUploadProps) => {
   const clearFile = () => {
     setFile(null);
     setPreview(null);
+    onClear?.();
+  };
+
+  const handleAnalyzeClick = () => {
+    if (file) {
+      onAnalyze(file);
+    }
   };
 
   const getFileIcon = () => {
@@ -149,7 +157,7 @@ const MediaUpload = ({ onAnalyze, isAnalyzing }: MediaUploadProps) => {
         size="lg"
         className="w-full"
         disabled={!file || isAnalyzing}
-        onClick={onAnalyze}
+        onClick={handleAnalyzeClick}
       >
         {isAnalyzing ? (
           <>
