@@ -323,8 +323,15 @@ Respond with ONLY a valid JSON object:
     try {
       // Extract JSON from potential markdown code blocks
       const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/) || content.match(/```\s*([\s\S]*?)\s*```/);
-      const jsonStr = jsonMatch ? jsonMatch[1] : content;
-      analysisData = JSON.parse(jsonStr.trim());
+      let jsonStr = jsonMatch ? jsonMatch[1] : content;
+      
+      // Remove JavaScript-style comments that AI sometimes includes (invalid JSON)
+      jsonStr = jsonStr
+        .replace(/\/\/[^\n\r]*/g, '') // Remove single-line comments
+        .replace(/\/\*[\s\S]*?\*\//g, '') // Remove multi-line comments
+        .trim();
+      
+      analysisData = JSON.parse(jsonStr);
     } catch (parseError) {
       console.error("Failed to parse AI response:", content);
       throw new Error("Failed to parse analysis results");
