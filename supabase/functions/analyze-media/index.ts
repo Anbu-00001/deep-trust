@@ -34,6 +34,16 @@ interface ModalityScore {
   findings: string[];
 }
 
+interface MultimodalConsistencyResult {
+  consistencyStatus: "consistent" | "partially_consistent" | "inconsistent" | "single_modality" | "not_applicable";
+  visualScore: number;
+  audioScore: number | null;
+  disagreement: number;
+  confidenceModifier: number;
+  adjustedConfidence: number;
+  explanation: string;
+}
+
 interface GanFingerprints {
   detected: boolean;
   patterns: string[];
@@ -85,6 +95,7 @@ interface AnalysisResult {
   audioAnomalies: AnomalyRegion[];
   frameAnalysis: FrameData[];
   modalityScores: ModalityScore[];
+  multimodalConsistency: MultimodalConsistencyResult;
 }
 
 serve(async (req) => {
@@ -408,6 +419,66 @@ Respond with ONLY a valid JSON object:
     const trustScore = Math.min(100, Math.max(0, analysisData.trustScore || 50));
     const uncertaintyFlag = analysisData.uncertaintyFlag || (trustScore >= 40 && trustScore <= 70);
     
+    // ============================================================
+    // MULTIMODAL CONSISTENCY CHECK MODULE
+    // This module READS existing modality scores and adjusts
+    // interpretation only. It does NOT modify original scores.
+    // ============================================================
+    const LOW_DISAGREEMENT = 0.15;
+    const HIGH_DISAGREEMENT = 0.30;
+    
+    const visualScore = modalityScores.find(m => m.modality === "visual")?.score ?? trustScore;
+    const audioScore = modalityScores.find(m => m.modality === "audio")?.score ?? null;
+    
+    let multimodalConsistency: MultimodalConsistencyResult;
+    
+    if (audioScore === null || detectedMediaType === "image") {
+      // Single modality - skip consistency check
+      multimodalConsistency = {
+        consistencyStatus: "single_modality",
+        visualScore,
+        audioScore: null,
+        disagreement: 0,
+        confidenceModifier: 0,
+        adjustedConfidence: trustScore,
+        explanation: "Single modality analysis — consistency check not applicable."
+      };
+    } else {
+      // Multi-modal: compute disagreement
+      const visualNormalized = visualScore / 100;
+      const audioNormalized = audioScore / 100;
+      const disagreement = Math.abs(visualNormalized - audioNormalized);
+      
+      let consistencyStatus: MultimodalConsistencyResult["consistencyStatus"];
+      let confidenceModifier: number;
+      let explanation: string;
+      
+      if (disagreement >= HIGH_DISAGREEMENT) {
+        consistencyStatus = "inconsistent";
+        confidenceModifier = -15;
+        explanation = "Audio and visual signals show conflicting authenticity patterns. The system detected significant disagreement between what it sees and hears, requiring cautious interpretation.";
+      } else if (disagreement >= LOW_DISAGREEMENT) {
+        consistencyStatus = "partially_consistent";
+        confidenceModifier = -7;
+        explanation = "Audio and visual signals show some variation. Minor disagreement detected — the result remains valid but with reduced confidence.";
+      } else {
+        consistencyStatus = "consistent";
+        confidenceModifier = 0;
+        explanation = "Audio and visual signals agree. Both modalities support the same authenticity conclusion.";
+      }
+      
+      multimodalConsistency = {
+        consistencyStatus,
+        visualScore,
+        audioScore,
+        disagreement,
+        confidenceModifier,
+        adjustedConfidence: Math.min(100, Math.max(0, trustScore + confidenceModifier)),
+        explanation
+      };
+    }
+    // ============================================================
+    
     const result: AnalysisResult = {
       trustScore,
       riskLevel: trustScore >= 70 ? "low" : trustScore >= 40 ? "medium" : "high",
@@ -482,7 +553,8 @@ Respond with ONLY a valid JSON object:
       heatmapRegions,
       audioAnomalies,
       frameAnalysis,
-      modalityScores
+      modalityScores,
+      multimodalConsistency
     };
 
     return new Response(JSON.stringify(result), {

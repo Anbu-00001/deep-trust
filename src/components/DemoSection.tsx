@@ -9,6 +9,7 @@ import FrameTimeline from "./FrameTimeline";
 import MultiModalFusion from "./MultiModalFusion";
 import UncertaintyIndicator from "./UncertaintyIndicator";
 import ForensicDetails from "./ForensicDetails";
+import MultimodalConsistencyCheck from "./MultimodalConsistencyCheck";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useMediaAnalysis } from "@/hooks/useMediaAnalysis";
 
@@ -105,8 +106,9 @@ const DemoSection = () => {
           {result && (
             <div className="mt-8 p-8 rounded-2xl bg-gradient-card border border-border animate-fade-in-up">
               <Tabs defaultValue="fusion" className="w-full">
-                <TabsList className="grid w-full grid-cols-4 md:grid-cols-7 mb-8 h-auto">
+                <TabsList className="grid w-full grid-cols-4 md:grid-cols-8 mb-8 h-auto">
                   <TabsTrigger value="fusion" className="text-xs md:text-sm py-2">Multi-Modal</TabsTrigger>
+                  <TabsTrigger value="consistency" className="text-xs md:text-sm py-2">Consistency</TabsTrigger>
                   <TabsTrigger value="forensic" className="text-xs md:text-sm py-2">Forensic</TabsTrigger>
                   <TabsTrigger value="heatmap" className="text-xs md:text-sm py-2">Heatmap</TabsTrigger>
                   <TabsTrigger value="graph" className="text-xs md:text-sm py-2">Structure</TabsTrigger>
@@ -134,6 +136,42 @@ const DemoSection = () => {
                       </p>
                       <div className="pt-4 border-t border-border">
                         <RobustnessTest results={result.robustnessTests} compact />
+                      </div>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                {/* Multimodal Consistency Check - NEW MODULE */}
+                <TabsContent value="consistency" className="mt-0">
+                  <div className="flex flex-col lg:flex-row gap-8">
+                    <div className="flex-1">
+                      <MultimodalConsistencyCheck
+                        mediaType={result.mediaType}
+                        trustScore={result.trustScore}
+                        modalityScores={result.modalityScores}
+                        consistencyData={result.multimodalConsistency}
+                      />
+                    </div>
+                    <div className="lg:w-80 space-y-4">
+                      <h4 className="font-semibold">Consistency Analysis</h4>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        This module compares visual and audio signals to detect inconsistencies. 
+                        When modalities disagree, the system becomes more cautious rather than 
+                        overconfident in its predictions.
+                      </p>
+                      <div className="space-y-2 text-sm pt-4 border-t border-border">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-mono text-muted-foreground">🔍</span>
+                          <span className="text-muted-foreground">Cross-modal validation</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-mono text-muted-foreground">⚖️</span>
+                          <span className="text-muted-foreground">Disagreement thresholds</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-mono text-muted-foreground">🛡️</span>
+                          <span className="text-muted-foreground">Confidence calibration</span>
+                        </div>
                       </div>
                     </div>
                   </div>

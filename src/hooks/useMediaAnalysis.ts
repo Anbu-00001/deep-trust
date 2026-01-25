@@ -49,6 +49,16 @@ export interface MetadataAnalysis {
   findings: string[];
 }
 
+export interface MultimodalConsistencyResult {
+  consistencyStatus: "consistent" | "partially_consistent" | "inconsistent" | "single_modality" | "not_applicable";
+  visualScore: number;
+  audioScore: number | null;
+  disagreement: number;
+  confidenceModifier: number;
+  adjustedConfidence: number;
+  explanation: string;
+}
+
 export interface AnalysisResult {
   trustScore: number;
   riskLevel: "low" | "medium" | "high";
@@ -82,6 +92,7 @@ export interface AnalysisResult {
   audioAnomalies: AnomalyRegion[];
   frameAnalysis: FrameData[];
   modalityScores: ModalityScore[];
+  multimodalConsistency?: MultimodalConsistencyResult;
 }
 
 export const useMediaAnalysis = () => {
