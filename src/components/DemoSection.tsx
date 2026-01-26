@@ -106,9 +106,10 @@ const DemoSection = () => {
           {result && (
             <div className="mt-8 p-8 rounded-2xl bg-gradient-card border border-border animate-fade-in-up">
               <Tabs defaultValue="fusion" className="w-full">
-                <TabsList className="grid w-full grid-cols-4 md:grid-cols-8 mb-8 h-auto">
+                <TabsList className="grid w-full grid-cols-5 md:grid-cols-9 mb-8 h-auto">
                   <TabsTrigger value="fusion" className="text-xs md:text-sm py-2">Multi-Modal</TabsTrigger>
                   <TabsTrigger value="consistency" className="text-xs md:text-sm py-2">Consistency</TabsTrigger>
+                  <TabsTrigger value="robustness" className="text-xs md:text-sm py-2">Robustness</TabsTrigger>
                   <TabsTrigger value="forensic" className="text-xs md:text-sm py-2">Forensic</TabsTrigger>
                   <TabsTrigger value="heatmap" className="text-xs md:text-sm py-2">Heatmap</TabsTrigger>
                   <TabsTrigger value="graph" className="text-xs md:text-sm py-2">Structure</TabsTrigger>
@@ -139,6 +140,11 @@ const DemoSection = () => {
                       </div>
                     </div>
                   </div>
+                </TabsContent>
+
+                {/* NEW: Robustness Stress Evaluation Tab */}
+                <TabsContent value="robustness" className="mt-0">
+                  <RobustnessTest results={result.robustnessTests} />
                 </TabsContent>
 
                 {/* Multimodal Consistency Check - NEW MODULE */}
