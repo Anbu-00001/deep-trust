@@ -1,73 +1,57 @@
-# Welcome to your Lovable project
+DeepTrust 🔍
 
-## Project info
+Multimodal Trust Reasoning for Media Authenticity
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+Overview
 
-## How can I edit this code?
+DeepTrust is a multimodal forensic verification system designed to assess the authenticity of images, videos, and audio in real-world conditions.
+Instead of relying on a single model or opaque confidence score, DeepTrust reasons across multiple evidence streams and produces a calibrated, explainable trust verdict.
 
-There are several ways of editing your application.
+The system is built for scenarios where overconfidence is risky and explainability matters — such as journalism, content moderation, and digital forensics.
 
-**Use Lovable**
+Key Capabilities
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+Multimodal Analysis: Visual, structural (facial geometry), temporal (video), audio, and forensic signals analyzed in parallel
 
-Changes made via Lovable will be committed automatically to this repo.
+Multimodal Consistency Processor (MCP): Detects agreement or conflict across modalities and calibrates confidence accordingly
 
-**Use your preferred IDE**
+Visual Explainability: Attention heatmaps overlaid on face regions (eyes, mouth, cheeks) with severity indicators
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+Temporal & Audio Forensics: Frame-level anomaly timelines and audio spectrogram analysis
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+Robustness Testing: Evaluates stability under compression, noise, and degradation
 
-Follow these steps:
+Calibrated Trust Scoring: Produces Likely Authentic, Uncertain, or Likely Manipulated verdicts with evidence-backed explanations
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+Why DeepTrust Is Different
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+Treats deepfake detection as a trust reasoning problem, not just classification
 
-# Step 3: Install the necessary dependencies.
-npm i
+Explicitly models cross-modal disagreement instead of averaging scores
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+Exposes robustness and uncertainty, avoiding overconfident claims
 
-**Edit a file directly in GitHub**
+Designed as a decision-support system, not a black-box detector
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Tech Stack (High Level)
 
-**Use GitHub Codespaces**
+Frontend: React + TypeScript + Tailwind CSS
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Backend: Supabase + Edge Functions
 
-## What technologies are used for this project?
+Analysis: Computer vision, audio forensics, structural graph analysis, explainability (Grad-CAM-style heatmaps)
 
-This project is built with:
+Disclaimer
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+DeepTrust provides forensic signals and trust indicators, not legal proof.
+Results should be interpreted as decision support, especially in high-risk or legal contexts.
 
-## How can I deploy this project?
+Hackathon Context
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+This project was developed as a hackathon prototype, focusing on:
 
-## Can I connect a custom domain to my Lovable project?
+Real-world robustness
 
-Yes, you can!
+Explainability
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Responsible AI design
