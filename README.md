@@ -1,4 +1,4 @@
-DeepTrust 🔍
+DeepTrust
 
 Multimodal Trust Reasoning for Media Authenticity
 
