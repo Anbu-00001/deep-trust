@@ -9,7 +9,7 @@ Instead of relying on a single model or opaque confidence score, DeepTrust reaso
 
 The system is built for scenarios where overconfidence is risky and explainability matters — such as journalism, content moderation, and digital forensics.
 
-Key Capabilities
+Key Capabilities:
 
 Multimodal Analysis: Visual, structural (facial geometry), temporal (video), audio, and forensic signals analyzed in parallel
 
@@ -23,7 +23,7 @@ Robustness Testing: Evaluates stability under compression, noise, and degradatio
 
 Calibrated Trust Scoring: Produces Likely Authentic, Uncertain, or Likely Manipulated verdicts with evidence-backed explanations
 
-Why DeepTrust Is Different
+Why DeepTrust Is Different?
 
 Treats deepfake detection as a trust reasoning problem, not just classification
 
@@ -45,13 +45,3 @@ Disclaimer
 
 DeepTrust provides forensic signals and trust indicators, not legal proof.
 Results should be interpreted as decision support, especially in high-risk or legal contexts.
-
-Hackathon Context
-
-This project was developed as a hackathon prototype, focusing on:
-
-Real-world robustness
-
-Explainability
-
-Responsible AI design
