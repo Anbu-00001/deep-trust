@@ -5,7 +5,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface HeatmapRegion {
+interface HeatmapRegion { 
   x: number;
   y: number;
   radius: number;
