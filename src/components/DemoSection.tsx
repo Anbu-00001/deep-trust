@@ -1,3 +1,4 @@
+import ConfidenceDriftTable from "./ConfidenceDriftTable";
 import MediaUpload from "./MediaUpload";
 import TrustScoreMeter from "./TrustScoreMeter";
 import StructuralGraph from "./StructuralGraph";
@@ -106,8 +107,9 @@ const DemoSection = () => {
           {result && (
             <div className="mt-8 p-8 rounded-2xl bg-gradient-card border border-border animate-fade-in-up">
               <Tabs defaultValue="fusion" className="w-full">
-                <TabsList className="grid w-full grid-cols-5 md:grid-cols-9 mb-8 h-auto">
+                <TabsList className="grid w-full grid-cols-5 md:grid-cols-10 mb-8 h-auto">
                   <TabsTrigger value="fusion" className="text-xs md:text-sm py-2">Multi-Modal</TabsTrigger>
+                  <TabsTrigger value="deepfake" className="text-xs md:text-sm py-2">Deepfake</TabsTrigger>
                   <TabsTrigger value="consistency" className="text-xs md:text-sm py-2">Consistency</TabsTrigger>
                   <TabsTrigger value="robustness" className="text-xs md:text-sm py-2">Robustness</TabsTrigger>
                   <TabsTrigger value="forensic" className="text-xs md:text-sm py-2">Forensic</TabsTrigger>
@@ -142,7 +144,15 @@ const DemoSection = () => {
                   </div>
                 </TabsContent>
 
-                {/* NEW: Robustness Stress Evaluation Tab */}
+                {/* Visual Deepfake Detection + Confidence Drift */}
+                <TabsContent value="deepfake" className="mt-0">
+                  <ConfidenceDriftTable
+                    detection={result.visualDeepfakeDetection}
+                    drift={result.confidenceDrift}
+                  />
+                </TabsContent>
+
+
                 <TabsContent value="robustness" className="mt-0">
                   <RobustnessTest results={result.robustnessTests} />
                 </TabsContent>
