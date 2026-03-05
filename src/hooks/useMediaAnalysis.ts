@@ -59,6 +59,21 @@ export interface MultimodalConsistencyResult {
   explanation: string;
 }
 
+export interface VisualDeepfakeDetection {
+  visualDeepfakeProbability: number;
+  frameScores: number[];
+  modelUsed: string;
+}
+
+export interface ConfidenceDrift {
+  cleanScore: number;
+  compressedScore: number;
+  blurredScore: number;
+  noiseScore: number;
+  stabilityScore: number;
+  stabilityStatus: "stable" | "sensitive";
+}
+
 export interface AnalysisResult {
   trustScore: number;
   riskLevel: "low" | "medium" | "high";
@@ -93,6 +108,8 @@ export interface AnalysisResult {
   frameAnalysis: FrameData[];
   modalityScores: ModalityScore[];
   multimodalConsistency?: MultimodalConsistencyResult;
+  visualDeepfakeDetection?: VisualDeepfakeDetection;
+  confidenceDrift?: ConfidenceDrift;
 }
 
 export const useMediaAnalysis = () => {
