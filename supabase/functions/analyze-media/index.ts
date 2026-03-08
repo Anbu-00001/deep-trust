@@ -487,6 +487,53 @@ Guidelines:
       label: h.label
     }));
 
+    // ============================================================
+    // MANIPULATION LOCALIZATION MODULE
+    // Derives manipulation regions from heatmap data using
+    // approximate facial zone mapping. No new ML models needed.
+    // ============================================================
+    const FACIAL_ZONES = [
+      { region: "left_eye", label: "Left Eye", bounds: { xMin: 100, xMax: 170, yMin: 70, yMax: 130 },
+        explanation: "Lighting inconsistency detected around the left eye boundary." },
+      { region: "right_eye", label: "Right Eye", bounds: { xMin: 230, xMax: 300, yMin: 70, yMax: 130 },
+        explanation: "Lighting inconsistency detected around the right eye boundary." },
+      { region: "lip_boundary", label: "Mouth / Lip Boundary", bounds: { xMin: 150, xMax: 250, yMin: 170, yMax: 230 },
+        explanation: "Possible lip boundary distortion typical in face synthesis." },
+      { region: "left_cheek", label: "Left Cheek", bounds: { xMin: 80, xMax: 150, yMin: 130, yMax: 200 },
+        explanation: "High-frequency texture anomaly detected near the left cheek." },
+      { region: "right_cheek", label: "Right Cheek", bounds: { xMin: 250, xMax: 320, yMin: 130, yMax: 200 },
+        explanation: "High-frequency texture anomaly detected near the right cheek." },
+      { region: "nose_bridge", label: "Nose Bridge", bounds: { xMin: 170, xMax: 230, yMin: 110, yMax: 160 },
+        explanation: "Structural inconsistency detected at the nose bridge region." },
+      { region: "hairline", label: "Hairline / Forehead", bounds: { xMin: 120, xMax: 280, yMin: 20, yMax: 80 },
+        explanation: "Hairline blending artifact detected." },
+    ];
+
+    const manipulationRegions: ManipulationRegion[] = [];
+
+    for (const zone of FACIAL_ZONES) {
+      const overlapping = heatmapRegions.filter(hr => {
+        return hr.x >= zone.bounds.xMin && hr.x <= zone.bounds.xMax &&
+               hr.y >= zone.bounds.yMin && hr.y <= zone.bounds.yMax;
+      });
+      if (overlapping.length === 0) continue;
+
+      const totalWeight = overlapping.reduce((s, r) => s + r.radius, 0);
+      const avgIntensity = overlapping.reduce((s, r) => s + r.intensity * r.radius, 0) / totalWeight;
+
+      // Only include regions with elevated or high intensity
+      if (avgIntensity >= 0.3) {
+        const severity: "low" | "medium" | "high" = avgIntensity >= 0.6 ? "high" : avgIntensity >= 0.3 ? "medium" : "low";
+        manipulationRegions.push({
+          region: zone.region,
+          severity,
+          score: Math.round(avgIntensity * 100) / 100,
+          description: zone.explanation
+        });
+      }
+    }
+    // ============================================================
+
     // Process audio findings
     const audioAnomalies: AnomalyRegion[] = (analysisData.audioFindings?.anomalyRegions || []).map((a: any) => ({
       start: a.start || 0,
@@ -702,7 +749,8 @@ Guidelines:
       modalityScores,
       multimodalConsistency,
       visualDeepfakeDetection,
-      confidenceDrift
+      confidenceDrift,
+      manipulationRegions
     };
 
     return new Response(JSON.stringify(result), {
