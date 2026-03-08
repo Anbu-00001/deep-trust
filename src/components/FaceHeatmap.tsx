@@ -4,6 +4,8 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Eye, CircleDot, User, Brain, AlertTriangle, CheckCircle, Info } from "lucide-react";
+import ManipulationLocalization from "./ManipulationLocalization";
+import type { ManipulationRegion } from "@/hooks/useMediaAnalysis";
 
 interface HeatmapRegion {
   x: number;
@@ -17,6 +19,7 @@ interface FaceHeatmapProps {
   className?: string;
   regions?: HeatmapRegion[];
   overallScore?: number;
+  manipulationRegions?: ManipulationRegion[];
 }
 
 // Semantic face regions for attribution
@@ -102,7 +105,7 @@ const getSeverityLabel = (severity: "normal" | "elevated" | "high_risk") => {
   }
 };
 
-const FaceHeatmap = ({ className, regions, overallScore = 85 }: FaceHeatmapProps) => {
+const FaceHeatmap = ({ className, regions, overallScore = 85, manipulationRegions }: FaceHeatmapProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [showOverlay, setShowOverlay] = useState(true);
 
@@ -443,6 +446,8 @@ const FaceHeatmap = ({ className, regions, overallScore = 85 }: FaceHeatmapProps
           </div>
         </CardContent>
       </Card>
+      {/* Manipulation Localization Table */}
+      <ManipulationLocalization regions={manipulationRegions} />
     </div>
   );
 };
