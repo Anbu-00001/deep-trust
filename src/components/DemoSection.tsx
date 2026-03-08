@@ -1,3 +1,4 @@
+import AuthenticityTimeline from "./AuthenticityTimeline";
 import ConfidenceDriftTable from "./ConfidenceDriftTable";
 import MediaUpload from "./MediaUpload";
 import TrustScoreMeter from "./TrustScoreMeter";
@@ -234,6 +235,7 @@ const DemoSection = () => {
                       className="flex-1" 
                       regions={result.heatmapRegions}
                       overallScore={result.trustScore}
+                      manipulationRegions={result.manipulationRegions}
                     />
                     <div className="flex-1 space-y-4">
                       <h4 className="font-semibold">Attention Heatmap</h4>
@@ -331,6 +333,14 @@ const DemoSection = () => {
                       frames={result.frameAnalysis}
                       overallScore={result.trustScore}
                     />
+                    {/* Authenticity Timeline (video-optimized anomaly chart) */}
+                    <AuthenticityTimeline
+                      frames={result.frameAnalysis}
+                      mediaType={result.mediaType}
+                      overallScore={result.trustScore}
+                    />
+                  </div>
+                </TabsContent>
                   </div>
                 </TabsContent>
 
