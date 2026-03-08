@@ -23,6 +23,7 @@ import ChainOfCustody from "./ChainOfCustody";
 import EvidenceObjectList from "./EvidenceObjectList";
 import ContentProvenance from "./ContentProvenance";
 import ConfidenceCalibration from "./ConfidenceCalibration";
+import DownloadReportButton from "./DownloadReportButton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { useMediaAnalysis } from "@/hooks/useMediaAnalysis";
@@ -100,7 +101,7 @@ const DemoSection = () => {
                 </div>
               ) : result ? (
                 <div className="space-y-6">
-                  <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between">
                     <div>
                       <h3 className="text-xl font-semibold">Analysis Results</h3>
                       <div className="flex items-center gap-2 mt-1">
@@ -114,13 +115,20 @@ const DemoSection = () => {
                         )}
                       </div>
                     </div>
-                    <span className={`text-sm font-medium px-3 py-1 rounded-full ${
-                      result.riskLevel === "low" ? "bg-trust-high/10 text-trust-high" :
-                      result.riskLevel === "medium" ? "bg-trust-medium/10 text-trust-medium" :
-                      "bg-trust-low/10 text-trust-low"
-                    }`}>
-                      {result.verdict}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <DownloadReportButton
+                        result={result}
+                        evidenceObjects={evidenceObjects}
+                        chainOfCustody={chainOfCustody}
+                      />
+                      <span className={`text-sm font-medium px-3 py-1 rounded-full ${
+                        result.riskLevel === "low" ? "bg-trust-high/10 text-trust-high" :
+                        result.riskLevel === "medium" ? "bg-trust-medium/10 text-trust-medium" :
+                        "bg-trust-low/10 text-trust-low"
+                      }`}>
+                        {result.verdict}
+                      </span>
+                    </div>
                   </div>
                   
                   <div className="flex justify-center py-4">
