@@ -77,6 +77,13 @@ interface ConfidenceDrift {
   stabilityStatus: "stable" | "sensitive";
 }
 
+interface ManipulationRegion {
+  region: string;
+  severity: "low" | "medium" | "high";
+  score: number;
+  description: string;
+}
+
 interface AnalysisResult {
   trustScore: number;
   riskLevel: "low" | "medium" | "high";
@@ -113,6 +120,7 @@ interface AnalysisResult {
   multimodalConsistency: MultimodalConsistencyResult;
   visualDeepfakeDetection: VisualDeepfakeDetection;
   confidenceDrift: ConfidenceDrift;
+  manipulationRegions: ManipulationRegion[];
 }
 
 serve(async (req) => {

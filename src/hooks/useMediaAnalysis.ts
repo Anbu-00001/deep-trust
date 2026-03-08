@@ -74,6 +74,13 @@ export interface ConfidenceDrift {
   stabilityStatus: "stable" | "sensitive";
 }
 
+export interface ManipulationRegion {
+  region: string;
+  severity: "low" | "medium" | "high";
+  score: number;
+  description: string;
+}
+
 export interface AnalysisResult {
   trustScore: number;
   riskLevel: "low" | "medium" | "high";
@@ -110,6 +117,7 @@ export interface AnalysisResult {
   multimodalConsistency?: MultimodalConsistencyResult;
   visualDeepfakeDetection?: VisualDeepfakeDetection;
   confidenceDrift?: ConfidenceDrift;
+  manipulationRegions?: ManipulationRegion[];
 }
 
 export const useMediaAnalysis = () => {
