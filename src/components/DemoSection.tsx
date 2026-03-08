@@ -341,8 +341,6 @@ const DemoSection = () => {
                     />
                   </div>
                 </TabsContent>
-                  </div>
-                </TabsContent>
 
                 {/* Audio Spectrogram */}
                 <TabsContent value="audio" className="mt-0">
