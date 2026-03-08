@@ -1,6 +1,9 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAnalysisCache } from "@/hooks/useAnalysisCache";
+import { generateEvidenceObjects, buildChainOfCustody } from "@/lib/forensicEvidence";
+import type { ForensicEvidenceObject, ChainOfCustodyMetadata } from "@/lib/forensicEvidence";
 
 export interface HeatmapRegion {
   x: number;
@@ -124,14 +127,44 @@ export const useMediaAnalysis = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [fileHash, setFileHash] = useState<string | null>(null);
+  const [cachedHit, setCachedHit] = useState(false);
+
+  const { getFileHash, getCached, setCached } = useAnalysisCache();
+
+  // Derived forensic evidence objects
+  const evidenceObjects: ForensicEvidenceObject[] = useMemo(
+    () => (result ? generateEvidenceObjects(result) : []),
+    [result]
+  );
+
+  // Derived chain-of-custody metadata
+  const chainOfCustody: ChainOfCustodyMetadata | null = useMemo(
+    () => (result && fileHash ? buildChainOfCustody(fileHash, result) : null),
+    [result, fileHash]
+  );
 
   const analyzeMedia = async (file: File): Promise<AnalysisResult | null> => {
     setIsAnalyzing(true);
     setError(null);
     setResult(null);
+    setCachedHit(false);
 
     try {
-      // Convert file to base64
+      // Step 1: Generate file hash
+      const hash = await getFileHash(file);
+      setFileHash(hash);
+
+      // Step 2: Check cache
+      const cached = getCached(hash);
+      if (cached) {
+        setResult(cached);
+        setCachedHit(true);
+        toast.success("Loaded from analysis cache");
+        return cached;
+      }
+
+      // Step 3: Run full analysis
       const base64 = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => resolve(reader.result as string);
@@ -154,6 +187,8 @@ export const useMediaAnalysis = () => {
         throw new Error(data.error);
       }
 
+      // Step 4: Cache result
+      setCached(hash, data);
       setResult(data);
       return data;
 
@@ -170,6 +205,8 @@ export const useMediaAnalysis = () => {
   const reset = () => {
     setResult(null);
     setError(null);
+    setFileHash(null);
+    setCachedHit(false);
   };
 
   return {
@@ -177,6 +214,10 @@ export const useMediaAnalysis = () => {
     isAnalyzing,
     result,
     error,
-    reset
+    reset,
+    fileHash,
+    cachedHit,
+    evidenceObjects,
+    chainOfCustody,
   };
 };
