@@ -12,6 +12,9 @@ import MultiModalFusion from "./MultiModalFusion";
 import UncertaintyIndicator from "./UncertaintyIndicator";
 import ForensicDetails from "./ForensicDetails";
 import MultimodalConsistencyCheck from "./MultimodalConsistencyCheck";
+import AuthenticityMeter from "./AuthenticityMeter";
+import EvidenceSummary from "./EvidenceSummary";
+import FaceAudioConsistency from "./FaceAudioConsistency";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useMediaAnalysis } from "@/hooks/useMediaAnalysis";
 
@@ -190,6 +193,12 @@ const DemoSection = () => {
                           <span className="text-muted-foreground">Confidence calibration</span>
                         </div>
                       </div>
+                      {/* Face-Audio Consistency Indicator */}
+                      <FaceAudioConsistency
+                        mediaType={result.mediaType}
+                        visualScore={result.modalityScores.find(m => m.modality === "visual")?.score ?? result.trustScore}
+                        audioScore={result.modalityScores.find(m => m.modality === "audio")?.score ?? null}
+                      />
                     </div>
                   </div>
                 </TabsContent>
@@ -367,12 +376,25 @@ const DemoSection = () => {
                 
                 {/* Detailed Explanation */}
                 <TabsContent value="explanation" className="mt-0">
-                  <ExplanationPanel 
-                    observations={result.observations}
-                    verdict={result.verdict}
-                    trustScore={result.trustScore}
-                    analysisTime={result.analysisTime}
-                  />
+                  <div className="space-y-6">
+                    {/* Layer 1: Instant Verdict */}
+                    <AuthenticityMeter trustScore={result.trustScore} />
+
+                    {/* Layer 2: Human Explanation */}
+                    <EvidenceSummary
+                      observations={result.observations}
+                      trustScore={result.trustScore}
+                      verdict={result.verdict}
+                    />
+
+                    {/* Layer 3: Technical Evidence (existing) */}
+                    <ExplanationPanel 
+                      observations={result.observations}
+                      verdict={result.verdict}
+                      trustScore={result.trustScore}
+                      analysisTime={result.analysisTime}
+                    />
+                  </div>
                 </TabsContent>
               </Tabs>
             </div>
