@@ -1,4 +1,7 @@
 import { useState, useMemo } from "react";
+import GeneratorAttribution from "./GeneratorAttribution";
+import DetectorConsensus from "./DetectorConsensus";
+import ArtifactAmplification from "./ArtifactAmplification";
 import AuthenticityTimeline from "./AuthenticityTimeline";
 import ConfidenceDriftTable from "./ConfidenceDriftTable";
 import MediaUpload from "./MediaUpload";
@@ -227,10 +230,14 @@ const DemoSection = () => {
 
                   {/* Visual Deepfake Detection + Confidence Drift */}
                   <TabsContent value="deepfake" className="mt-0">
-                    <ConfidenceDriftTable
-                      detection={result.visualDeepfakeDetection}
-                      drift={result.confidenceDrift}
-                    />
+                    <div className="space-y-6">
+                      <ConfidenceDriftTable
+                        detection={result.visualDeepfakeDetection}
+                        drift={result.confidenceDrift}
+                      />
+                      {/* Multi-Detector Ensemble Consensus */}
+                      <DetectorConsensus result={result} />
+                    </div>
                   </TabsContent>
 
 
@@ -289,6 +296,8 @@ const DemoSection = () => {
                           textureAnalysis={result.textureAnalysis}
                           metadataAnalysis={result.metadataAnalysis}
                         />
+                        {/* DeepFake Generator Attribution */}
+                        <GeneratorAttribution result={result} />
                         {/* Chain-of-Custody Metadata */}
                         <ChainOfCustody metadata={chainOfCustody} />
                       </div>
