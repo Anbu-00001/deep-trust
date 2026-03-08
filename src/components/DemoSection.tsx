@@ -334,45 +334,49 @@ const DemoSection = () => {
 
                   {/* Face Heatmap (Grad-CAM) */}
                   <TabsContent value="heatmap" className="mt-0">
-                    <div className="flex flex-col lg:flex-row items-start gap-8">
-                      <FaceHeatmap 
-                        className="flex-1" 
-                        regions={result.heatmapRegions}
-                        overallScore={result.trustScore}
-                        manipulationRegions={result.manipulationRegions}
-                      />
-                      <div className="flex-1 space-y-4">
-                        <h4 className="font-semibold">Attention Heatmap</h4>
-                        <p className="text-sm text-muted-foreground leading-relaxed">
-                          Grad-CAM style visualization showing regions that triggered the 
-                          deepfake detection model. High-intensity (red) areas indicate 
-                          regions with potential manipulation artifacts or unusual patterns.
-                        </p>
-                        <div className="space-y-2 text-sm pt-4 border-t border-border">
-                          <div className="flex justify-between py-2 border-b border-border">
-                            <span className="text-muted-foreground">Regions analyzed</span>
-                            <span className="font-mono">{result.heatmapRegions.length || "Full face"}</span>
-                          </div>
-                          <div className="flex justify-between py-2 border-b border-border">
-                            <span className="text-muted-foreground">High attention areas</span>
-                            <span className={`font-mono ${
-                              (result.heatmapRegions.filter(r => r.intensity > 0.6).length || 0) > 2 
-                                ? 'text-trust-low' : 'text-trust-high'
-                            }`}>
-                              {result.heatmapRegions.filter(r => r.intensity > 0.6).length || 0}
-                            </span>
-                          </div>
-                          <div className="flex justify-between py-2">
-                            <span className="text-muted-foreground">Max intensity</span>
-                            <span className={`font-mono ${
-                              Math.max(...result.heatmapRegions.map(r => r.intensity), 0) > 0.7 
-                                ? 'text-trust-low' : 'text-trust-high'
-                            }`}>
-                              {(Math.max(...result.heatmapRegions.map(r => r.intensity), 0) * 100).toFixed(0)}%
-                            </span>
+                    <div className="space-y-6">
+                      <div className="flex flex-col lg:flex-row items-start gap-8">
+                        <FaceHeatmap 
+                          className="flex-1" 
+                          regions={result.heatmapRegions}
+                          overallScore={result.trustScore}
+                          manipulationRegions={result.manipulationRegions}
+                        />
+                        <div className="flex-1 space-y-4">
+                          <h4 className="font-semibold">Attention Heatmap</h4>
+                          <p className="text-sm text-muted-foreground leading-relaxed">
+                            Grad-CAM style visualization showing regions that triggered the 
+                            deepfake detection model. High-intensity (red) areas indicate 
+                            regions with potential manipulation artifacts or unusual patterns.
+                          </p>
+                          <div className="space-y-2 text-sm pt-4 border-t border-border">
+                            <div className="flex justify-between py-2 border-b border-border">
+                              <span className="text-muted-foreground">Regions analyzed</span>
+                              <span className="font-mono">{result.heatmapRegions.length || "Full face"}</span>
+                            </div>
+                            <div className="flex justify-between py-2 border-b border-border">
+                              <span className="text-muted-foreground">High attention areas</span>
+                              <span className={`font-mono ${
+                                (result.heatmapRegions.filter(r => r.intensity > 0.6).length || 0) > 2 
+                                  ? 'text-trust-low' : 'text-trust-high'
+                              }`}>
+                                {result.heatmapRegions.filter(r => r.intensity > 0.6).length || 0}
+                              </span>
+                            </div>
+                            <div className="flex justify-between py-2">
+                              <span className="text-muted-foreground">Max intensity</span>
+                              <span className={`font-mono ${
+                                Math.max(...result.heatmapRegions.map(r => r.intensity), 0) > 0.7 
+                                  ? 'text-trust-low' : 'text-trust-high'
+                              }`}>
+                                {(Math.max(...result.heatmapRegions.map(r => r.intensity), 0) * 100).toFixed(0)}%
+                              </span>
+                            </div>
                           </div>
                         </div>
                       </div>
+                      {/* Synthetic Artifact Amplification */}
+                      <ArtifactAmplification result={result} />
                     </div>
                   </TabsContent>
 
