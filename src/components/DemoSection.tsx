@@ -24,6 +24,8 @@ import EvidenceObjectList from "./EvidenceObjectList";
 import ContentProvenance from "./ContentProvenance";
 import ConfidenceCalibration from "./ConfidenceCalibration";
 import DownloadReportButton from "./DownloadReportButton";
+import AdversarialStressTestPanel from "./AdversarialStressTest";
+import ForgeryPatternDiscovery from "./ForgeryPatternDiscovery";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { useMediaAnalysis } from "@/hooks/useMediaAnalysis";
@@ -262,12 +264,16 @@ const DemoSection = () => {
                       />
                       {/* Multi-Detector Ensemble Consensus */}
                       <DetectorConsensus result={result} />
+                      <ForgeryPatternDiscovery result={result} />
                     </div>
                   </TabsContent>
 
 
                   <TabsContent value="robustness" className="mt-0">
-                    <RobustnessTest results={result.robustnessTests} />
+                    <div className="space-y-6">
+                      <RobustnessTest results={result.robustnessTests} />
+                      <AdversarialStressTestPanel result={result} />
+                    </div>
                   </TabsContent>
 
                   {/* Multimodal Consistency Check */}
