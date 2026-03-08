@@ -21,6 +21,8 @@ import EvidenceSummary from "./EvidenceSummary";
 import FaceAudioConsistency from "./FaceAudioConsistency";
 import ChainOfCustody from "./ChainOfCustody";
 import EvidenceObjectList from "./EvidenceObjectList";
+import ContentProvenance from "./ContentProvenance";
+import ConfidenceCalibration from "./ConfidenceCalibration";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { useMediaAnalysis } from "@/hooks/useMediaAnalysis";
@@ -158,17 +160,29 @@ const DemoSection = () => {
                   {/* Layer 1: Instant Verdict */}
                   <AuthenticityMeter trustScore={result.trustScore} />
 
-                  {/* Layer 2: Evidence Summary */}
+                  {/* Layer 2: Confidence Calibration */}
+                  <ConfidenceCalibration
+                    trustScore={result.trustScore}
+                    modalityScores={result.modalityScores}
+                  />
+
+                  {/* Layer 3: Detector Consensus */}
+                  <DetectorConsensus result={result} />
+
+                  {/* Layer 4: Artifact Amplification */}
+                  <ArtifactAmplification result={result} />
+
+                  {/* Layer 5: Evidence Summary */}
                   <EvidenceSummary
                     observations={result.observations}
                     trustScore={result.trustScore}
                     verdict={result.verdict}
                   />
 
-                  {/* Layer 3: Evidence Objects */}
+                  {/* Layer 6: Evidence Objects */}
                   <EvidenceObjectList evidence={evidenceObjects} />
 
-                  {/* Layer 4: Evidence Timeline (for video) */}
+                  {/* Layer 7: Evidence Timeline (for video) */}
                   {result.mediaType !== "image" && timelineEvents.length > 0 && (
                     <AuthenticityTimeline
                       frames={result.frameAnalysis}
@@ -177,7 +191,10 @@ const DemoSection = () => {
                     />
                   )}
 
-                  {/* Layer 5: Explanation Cards */}
+                  {/* Layer 8: Content Provenance */}
+                  <ContentProvenance result={result} />
+
+                  {/* Layer 9: Explanation Cards */}
                   <ExplanationPanel
                     observations={result.observations}
                     verdict={result.verdict}
@@ -185,7 +202,7 @@ const DemoSection = () => {
                     analysisTime={result.analysisTime}
                   />
 
-                  {/* Layer 6: Forensic Metadata */}
+                  {/* Layer 10: Forensic Metadata */}
                   <ChainOfCustody metadata={chainOfCustody} />
                 </div>
               ) : (
@@ -298,6 +315,8 @@ const DemoSection = () => {
                         />
                         {/* DeepFake Generator Attribution */}
                         <GeneratorAttribution result={result} />
+                        {/* Content Provenance Detection */}
+                        <ContentProvenance result={result} />
                         {/* Chain-of-Custody Metadata */}
                         <ChainOfCustody metadata={chainOfCustody} />
                       </div>
@@ -478,6 +497,12 @@ const DemoSection = () => {
                     <div className="space-y-6">
                       {/* Layer 1: Instant Verdict */}
                       <AuthenticityMeter trustScore={result.trustScore} />
+
+                      {/* Layer 1.5: Confidence Calibration */}
+                      <ConfidenceCalibration
+                        trustScore={result.trustScore}
+                        modalityScores={result.modalityScores}
+                      />
 
                       {/* Layer 2: Human Explanation */}
                       <EvidenceSummary
