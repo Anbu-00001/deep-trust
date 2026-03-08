@@ -128,7 +128,7 @@ export function analyzeProvenance(
     return {
       sourceMatch: entry.id,
       similarityScore: Math.round(similarity * 100) / 100,
-      matchType: similarity >= 0.9 ? "exact" : similarity >= 0.75 ? entry.matchType : "no_match",
+      matchType: (similarity >= 0.9 ? "exact" : similarity >= 0.75 ? entry.matchType : "no_match") as ProvenanceMatch["matchType"],
       sourceLabel: entry.sourceLabel,
       timestamp: entry.timestamp,
     };
