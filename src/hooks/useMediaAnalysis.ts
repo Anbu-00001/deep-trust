@@ -164,10 +164,10 @@ export const useMediaAnalysis = () => {
         return cached;
       }
 
-      // Step 3: Validate file size (max 4.5MB to stay within edge function memory)
-      const MAX_FILE_SIZE = 4.5 * 1024 * 1024;
+      // Step 3: Validate file size (max 100MB)
+      const MAX_FILE_SIZE = 100 * 1024 * 1024;
       if (file.size > MAX_FILE_SIZE) {
-        throw new Error(`File too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum supported size is 4.5MB. Please use a smaller file or compress the media first.`);
+        throw new Error(`File too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum supported size is 100MB.`);
       }
 
       // Step 4: Run full analysis
