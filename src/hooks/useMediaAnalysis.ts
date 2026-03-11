@@ -164,7 +164,13 @@ export const useMediaAnalysis = () => {
         return cached;
       }
 
-      // Step 3: Run full analysis
+      // Step 3: Validate file size (max 4.5MB to stay within edge function memory)
+      const MAX_FILE_SIZE = 4.5 * 1024 * 1024;
+      if (file.size > MAX_FILE_SIZE) {
+        throw new Error(`File too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum supported size is 4.5MB. Please use a smaller file or compress the media first.`);
+      }
+
+      // Step 4: Run full analysis
       const base64 = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => resolve(reader.result as string);
