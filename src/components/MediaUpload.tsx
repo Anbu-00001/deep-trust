@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Upload, Image, Video, Music, X, Loader2 } from "lucide-react";
+import { Upload, Image, Video, Music, X, Loader2, FileKey, LockKeyhole } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -76,17 +76,17 @@ const MediaUpload = ({ onAnalyze, isAnalyzing, onClear }: MediaUploadProps) => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="flex h-full flex-col gap-4">
       {/* Drop zone */}
       <div
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         className={cn(
-          "relative border-2 border-dashed rounded-xl p-8 transition-all duration-300 cursor-pointer",
+          "group relative flex min-h-[300px] flex-1 cursor-crosshair items-center justify-center overflow-hidden rounded border border-dashed p-6 transition-colors duration-200",
           isDragging 
-            ? "border-primary bg-primary/5 scale-[1.02]" 
-            : "border-border hover:border-primary/50 hover:bg-secondary/30",
+            ? "border-primary bg-primary/5" 
+            : "border-border hover:border-primary/60 hover:bg-secondary/20",
           file && "border-primary/30"
         )}
       >
@@ -102,35 +102,39 @@ const MediaUpload = ({ onAnalyze, isAnalyzing, onClear }: MediaUploadProps) => {
             <img
               src={preview}
               alt="Preview"
-              className="max-h-64 mx-auto rounded-lg object-contain"
+               className="max-h-72 mx-auto rounded object-contain"
             />
-            <button
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                aria-label="Remove selected file"
               onClick={(e) => {
                 e.stopPropagation();
                 clearFile();
               }}
-              className="absolute top-2 right-2 p-2 rounded-full bg-background/80 hover:bg-background border border-border transition-colors"
+                className="absolute right-2 top-2"
             >
               <X className="w-4 h-4" />
-            </button>
+              </Button>
           </div>
         ) : (
           <div className="flex flex-col items-center gap-4 text-center">
             <div className={cn(
-              "p-4 rounded-full transition-colors",
-              isDragging ? "bg-primary/20 text-primary" : "bg-secondary text-muted-foreground"
+              "flex h-14 w-14 items-center justify-center rounded border transition-colors",
+              isDragging ? "border-primary bg-primary/10 text-primary" : "border-border bg-secondary text-muted-foreground"
             )}>
               {getFileIcon()}
             </div>
             
             <div>
-              <p className="text-lg font-medium">
-                {file ? file.name : "Drop media file here"}
+              <p className="font-mono text-sm font-bold uppercase">
+                {file ? file.name : "Place evidence file here"}
               </p>
               <p className="text-sm text-muted-foreground mt-1">
                 {file 
                   ? `${(file.size / 1024 / 1024).toFixed(2)} MB`
-                  : "Supports images, videos, and audio files"
+                  : "or select a local image, video, or audio file"
                 }
               </p>
             </div>
@@ -138,22 +142,14 @@ const MediaUpload = ({ onAnalyze, isAnalyzing, onClear }: MediaUploadProps) => {
         )}
       </div>
 
-      {/* Supported formats */}
-      <div className="flex flex-wrap items-center justify-center gap-3">
-        <span className="text-xs text-muted-foreground">Supported:</span>
-        {["JPG", "PNG", "MP4", "WebM", "MP3", "WAV"].map((format) => (
-          <span
-            key={format}
-            className="px-2 py-1 text-xs font-mono bg-secondary rounded"
-          >
-            {format}
-          </span>
-        ))}
+      <div className="grid grid-cols-2 gap-px overflow-hidden rounded border border-border bg-border text-xs">
+        <div className="flex items-center gap-2 bg-card px-3 py-2 text-muted-foreground"><FileKey className="h-3.5 w-3.5" /> SHA-256 on intake</div>
+        <div className="flex items-center gap-2 bg-card px-3 py-2 text-muted-foreground"><LockKeyhole className="h-3.5 w-3.5" /> 100 MB maximum</div>
       </div>
 
       {/* Analyze button */}
       <Button
-        variant="hero"
+        variant="default"
         size="lg"
         className="w-full"
         disabled={!file || isAnalyzing}
@@ -162,11 +158,11 @@ const MediaUpload = ({ onAnalyze, isAnalyzing, onClear }: MediaUploadProps) => {
         {isAnalyzing ? (
           <>
             <Loader2 className="w-5 h-5 animate-spin" />
-            Analyzing Media...
+            Assessing evidence…
           </>
         ) : (
           <>
-            Analyze for Authenticity
+            Begin evidence assessment
           </>
         )}
       </Button>
