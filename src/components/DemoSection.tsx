@@ -30,17 +30,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { useMediaAnalysis } from "@/hooks/useMediaAnalysis";
 import { Badge } from "@/components/ui/badge";
-import { Search, Zap } from "lucide-react";
+import { AlertTriangle, CheckCircle2, CircleDashed, FileCheck2, FlaskConical, Search, ShieldAlert, Zap } from "lucide-react";
 
 const DemoSection = () => {
-  const { analyzeMedia, isAnalyzing, result, reset, cachedHit, evidenceObjects, chainOfCustody } = useMediaAnalysis();
+  const { analyzeMedia, isAnalyzing, result, error, reset, fileHash, cachedHit, evidenceObjects, chainOfCustody } = useMediaAnalysis();
   const [investigationMode, setInvestigationMode] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const handleAnalyze = async (file: File) => {
     await analyzeMedia(file);
   };
 
   const handleClear = () => {
+    setSelectedFile(null);
     reset();
   };
 
@@ -58,100 +60,124 @@ const DemoSection = () => {
   }, [evidenceObjects]);
 
   return (
-    <section id="demo" className="py-24 relative">
-      <div className="container mx-auto px-6">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Try It Now
-          </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Upload any image, video, or audio file to see DeepTrust in action
-          </p>
+    <section id="workspace" className="relative min-h-[calc(100vh-3rem)] workspace-grid">
+      <div className="mx-auto max-w-[1600px] px-3 py-3 md:px-5 md:py-5">
+        <div className="mb-4 flex flex-col justify-between gap-3 border-b border-border pb-4 md:flex-row md:items-end">
+          <div>
+            <div className="mb-2 flex items-center gap-2 font-mono text-[10px] uppercase text-primary">
+              <span className="h-1.5 w-1.5 bg-primary" /> Assessment console
+            </div>
+            <h1 className="text-2xl font-bold uppercase md:text-3xl">Media integrity analysis</h1>
+            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+              Inspect submitted media, preserve its file hash, and review model observations with explicit uncertainty.
+            </p>
+          </div>
+          <div className="flex items-center gap-3 font-mono text-[10px] uppercase text-muted-foreground">
+            <span>Mode / Single-pass model assessment</span>
+            <span className="h-2 w-2 bg-success" /> Ready
+          </div>
         </div>
 
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Left: Upload */}
-            <div className="p-8 rounded-2xl bg-gradient-card border border-border">
-              <h3 className="text-xl font-semibold mb-6">Upload Media</h3>
-              <MediaUpload 
-                onAnalyze={handleAnalyze} 
-                isAnalyzing={isAnalyzing} 
-                onClear={handleClear}
-              />
+        <div className="grid min-h-[640px] overflow-hidden rounded border border-border bg-background lg:grid-cols-[52px_minmax(0,1fr)_340px]">
+          <aside className="hidden border-r border-border bg-card/60 py-3 lg:flex lg:flex-col lg:items-center lg:gap-3" aria-label="Workspace tools">
+            {[Search, FileCheck2, FlaskConical].map((Icon, index) => (
+              <div key={index} className={`flex h-9 w-9 items-center justify-center rounded border ${index === 0 ? "border-primary/40 bg-primary/10 text-primary" : "border-transparent text-muted-foreground"}`}>
+                <Icon className="h-4 w-4" />
+              </div>
+            ))}
+            <div className="mt-auto h-2 w-2 bg-success" title="Analysis service ready" />
+          </aside>
+
+          <div className="flex min-w-0 flex-col p-4 md:p-6">
+            <div className="mb-4 flex items-center justify-between gap-4">
+              <div>
+                <h2 className="text-sm font-bold uppercase">Evidence intake</h2>
+                <p className="mt-1 text-xs text-muted-foreground">Original files are hashed locally before assessment.</p>
+              </div>
+              <span className="font-mono text-[10px] uppercase text-muted-foreground">Image / video / audio</span>
+            </div>
+            <MediaUpload
+              onAnalyze={handleAnalyze}
+              isAnalyzing={isAnalyzing}
+              onClear={handleClear}
+              onFileSelect={setSelectedFile}
+            />
+          </div>
+
+          <aside className="border-t border-border bg-card/70 p-4 lg:border-l lg:border-t-0" aria-label="Assessment status">
+            <div className="mb-4 border-b border-border pb-3">
+              <h2 className="text-xs font-bold uppercase">Assessment status</h2>
+              <p className="mt-1 text-xs text-muted-foreground">Evidence, inference, and limitations are separated.</p>
             </div>
 
-            {/* Right: Results */}
-            <div className="p-8 rounded-2xl bg-gradient-card border border-border">
-              {!result && !isAnalyzing ? (
-                <div className="h-full flex flex-col items-center justify-center text-center py-12">
-                  <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mb-4">
-                    <div className="w-8 h-8 border-2 border-muted-foreground/30 border-t-primary rounded-full" />
-                  </div>
-                  <p className="text-muted-foreground">
-                    Upload a file to begin analysis
-                  </p>
+            <div className="space-y-4">
+              <div className="space-y-2 font-mono text-[10px] uppercase">
+                <div className="flex items-center justify-between border-b border-border py-2">
+                  <span className="text-muted-foreground">File selected</span>
+                  <span className={selectedFile ? "text-foreground" : "text-muted-foreground"}>{selectedFile ? "Yes" : "Pending"}</span>
+                </div>
+                <div className="flex items-center justify-between border-b border-border py-2">
+                  <span className="text-muted-foreground">File hash</span>
+                  <span className={fileHash ? "text-success" : "text-muted-foreground"}>{fileHash ? "Recorded" : "Pending"}</span>
+                </div>
+                <div className="flex items-center justify-between border-b border-border py-2">
+                  <span className="text-muted-foreground">Model assessment</span>
+                  <span className={result ? "text-primary" : "text-muted-foreground"}>{isAnalyzing ? "Running" : result ? "Complete" : "Pending"}</span>
+                </div>
+                <div className="flex items-center justify-between py-2">
+                  <span className="text-muted-foreground">Human review</span>
+                  <span className="text-accent">Required</span>
+                </div>
+              </div>
+
+              {error ? (
+                <div className="rounded border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+                  <div className="mb-1 flex items-center gap-2 font-medium"><ShieldAlert className="h-4 w-4" /> Assessment interrupted</div>
+                  <p className="text-xs leading-relaxed">{error}</p>
                 </div>
               ) : isAnalyzing ? (
-                <div className="h-full flex flex-col items-center justify-center text-center py-12">
-                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4 animate-pulse">
-                    <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
-                  </div>
-                  <p className="text-muted-foreground animate-pulse">
-                    Performing multi-modal forensic analysis...
-                  </p>
+                <div className="rounded border border-primary/40 bg-primary/5 p-3">
+                  <div className="mb-3 flex items-center gap-2 text-sm"><CircleDashed className="h-4 w-4 animate-spin text-primary" /> Reviewing submitted media</div>
+                  <div className="h-1 overflow-hidden bg-secondary"><div className="h-full w-2/3 animate-pulse bg-primary" /></div>
                 </div>
               ) : result ? (
-                <div className="space-y-6">
-                    <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-xl font-semibold">Analysis Results</h3>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs text-muted-foreground font-mono uppercase">
-                          {result.mediaType} • {result.analysisTime}s
-                        </span>
-                        {cachedHit && (
-                          <Badge variant="outline" className="text-xs gap-1 border-primary/30 text-primary">
-                            <Zap className="w-3 h-3" /> Cached
-                          </Badge>
-                        )}
+                <div className="space-y-4">
+                  <div className="rounded border border-border bg-background p-4">
+                    <div className="mb-3 flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-mono text-[10px] uppercase text-muted-foreground">Model assessment</p>
+                        <h3 className="mt-1 text-base font-bold">{result.verdict}</h3>
                       </div>
+                      {cachedHit && <Badge variant="outline" className="gap-1 text-[10px]"><Zap className="h-3 w-3" /> Cached</Badge>}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <DownloadReportButton
-                        result={result}
-                        evidenceObjects={evidenceObjects}
-                        chainOfCustody={chainOfCustody}
-                      />
-                      <span className={`text-sm font-medium px-3 py-1 rounded-full ${
-                        result.riskLevel === "low" ? "bg-trust-high/10 text-trust-high" :
-                        result.riskLevel === "medium" ? "bg-trust-medium/10 text-trust-medium" :
-                        "bg-trust-low/10 text-trust-low"
-                      }`}>
-                        {result.verdict}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div className="flex justify-center py-4">
                     <TrustScoreMeter score={result.trustScore} size="lg" />
+                    <div className="mt-3 flex items-center justify-between font-mono text-[10px] uppercase text-muted-foreground">
+                      <span>{result.mediaType}</span><span>{result.analysisTime}s</span>
+                    </div>
                   </div>
-                  
-                  {/* Uncertainty Indicator */}
-                  <UncertaintyIndicator 
-                    trustScore={result.trustScore}
-                    uncertaintyFlag={result.uncertaintyFlag}
-                    uncertaintyReason={result.uncertaintyReason}
-                    className="mt-4"
-                  />
+                  <UncertaintyIndicator trustScore={result.trustScore} uncertaintyFlag={result.uncertaintyFlag} uncertaintyReason={result.uncertaintyReason} />
+                  <DownloadReportButton result={result} evidenceObjects={evidenceObjects} chainOfCustody={chainOfCustody} />
                 </div>
-              ) : null}
+              ) : (
+                <div className="rounded border border-border bg-background p-4 text-sm text-muted-foreground">
+                  <div className="mb-2 flex items-center gap-2 text-foreground"><AlertTriangle className="h-4 w-4 text-accent" /> No conclusion yet</div>
+                  Add a file to begin. No authenticity claim is made before evidence is assessed.
+                </div>
+              )}
+
+              <div id="method" className="border-t border-border pt-4">
+                <div className="mb-2 flex items-center gap-2 text-xs font-medium"><CheckCircle2 className="h-3.5 w-3.5 text-success" /> Scope disclosure</div>
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  Results are probabilistic model observations, not proof of authenticity. File hashing is directly measured; analytical findings require expert review.
+                </p>
+              </div>
             </div>
-          </div>
+          </aside>
+        </div>
 
           {/* Detailed results */}
           {result && (
-            <div className="mt-8 p-8 rounded-2xl bg-gradient-card border border-border animate-fade-in-up">
+            <div id="reports" className="mt-5 border border-border bg-card p-4 animate-fade-in-up md:p-6">
               {/* Investigation Mode Toggle */}
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-2">
@@ -218,7 +244,7 @@ const DemoSection = () => {
               ) : (
                 /* ======= STANDARD TAB LAYOUT (unchanged) ======= */
                 <Tabs defaultValue="fusion" className="w-full">
-                  <TabsList className="grid w-full grid-cols-5 md:grid-cols-10 mb-8 h-auto">
+                  <TabsList className="mb-8 grid h-auto w-full grid-cols-2 gap-px overflow-hidden rounded border border-border bg-border p-0 sm:grid-cols-5 lg:grid-cols-10">
                     <TabsTrigger value="fusion" className="text-xs md:text-sm py-2">Multi-Modal</TabsTrigger>
                     <TabsTrigger value="deepfake" className="text-xs md:text-sm py-2">Deepfake</TabsTrigger>
                     <TabsTrigger value="consistency" className="text-xs md:text-sm py-2">Consistency</TabsTrigger>
