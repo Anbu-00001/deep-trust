@@ -7,9 +7,10 @@ interface MediaUploadProps {
   onAnalyze: (file: File) => void;
   isAnalyzing: boolean;
   onClear?: () => void;
+  onFileSelect?: (file: File | null) => void;
 }
 
-const MediaUpload = ({ onAnalyze, isAnalyzing, onClear }: MediaUploadProps) => {
+const MediaUpload = ({ onAnalyze, isAnalyzing, onClear, onFileSelect }: MediaUploadProps) => {
   const [isDragging, setIsDragging] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -36,6 +37,7 @@ const MediaUpload = ({ onAnalyze, isAnalyzing, onClear }: MediaUploadProps) => {
 
   const handleFile = (selectedFile: File) => {
     setFile(selectedFile);
+    onFileSelect?.(selectedFile);
     
     if (selectedFile.type.startsWith("image/")) {
       const reader = new FileReader();
@@ -58,6 +60,7 @@ const MediaUpload = ({ onAnalyze, isAnalyzing, onClear }: MediaUploadProps) => {
   const clearFile = () => {
     setFile(null);
     setPreview(null);
+    onFileSelect?.(null);
     onClear?.();
   };
 
