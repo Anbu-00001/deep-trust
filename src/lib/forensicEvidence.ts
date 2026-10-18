@@ -32,6 +32,7 @@ export interface ChainOfCustodyMetadata {
  * Does NOT invent new evidence — only structures what already exists.
  */
 export function generateEvidenceObjects(result: AnalysisResult): ForensicEvidenceObject[] {
+  if (result.originStatus === "indeterminate") return [];
   const evidence: ForensicEvidenceObject[] = [];
   let counter = 0;
   const nextId = (prefix: string) => `${prefix}_${String(++counter).padStart(3, "0")}`;
@@ -164,6 +165,10 @@ export function buildChainOfCustody(
   fileHash: string,
   result: AnalysisResult
 ): ChainOfCustodyMetadata {
+  if (result.originStatus === "indeterminate") return {
+    fileHash, uploadTimestamp: new Date().toISOString(), analysisVersion: result.assessmentVersion || "visual-review-v2",
+    modulesUsed: result.modelUsed === "Not run" ? ["SHA256"] : ["SHA256", "UnvalidatedVisualReview"], analysisTime: result.analysisTime,
+  };
   const modulesUsed: string[] = [
     "VisualAnalyzer",
     "StructuralAnalyzer",

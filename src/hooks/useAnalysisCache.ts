@@ -1,3 +1,4 @@
+import { ASSESSMENT_VERSION } from "../../supabase/functions/_shared/assessment-policy";
 import { useRef, useCallback } from "react";
 import type { AnalysisResult } from "@/hooks/useMediaAnalysis";
 
@@ -30,7 +31,7 @@ export const useAnalysisCache = () => {
     (fileHash: string): AnalysisResult | null => {
       const entry = cacheRef.current.get(fileHash);
       if (!entry) return null;
-      if (Date.now() - entry.timestamp > CACHE_TTL) {
+      if (entry.result.assessmentVersion !== ASSESSMENT_VERSION || Date.now() - entry.timestamp > CACHE_TTL) {
         cacheRef.current.delete(fileHash);
         return null;
       }

@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import AssessmentReview, { NotPerformed } from "./AssessmentReview";
 import GeneratorAttribution from "./GeneratorAttribution";
 import DetectorConsensus from "./DetectorConsensus";
 import ArtifactAmplification from "./ArtifactAmplification";
@@ -51,7 +52,7 @@ const DemoSection = () => {
     return evidenceObjects
       .filter((e) => e.timestamp !== null)
       .map((e) => ({
-        time: e.timestamp!,
+        time: e.timestamp ?? 0,
         type: e.category,
         severity: e.severity,
         linkedEvidenceId: e.id,
@@ -150,13 +151,13 @@ const DemoSection = () => {
                       </div>
                       {cachedHit && <Badge variant="outline" className="gap-1 text-[10px]"><Zap className="h-3 w-3" /> Cached</Badge>}
                     </div>
-                    <TrustScoreMeter score={result.trustScore} size="lg" />
+                    <div className="border-l-2 border-accent pl-3"><p className="text-sm font-semibold text-accent">Authenticity probability unavailable</p><p className="mt-2 text-xs leading-relaxed text-muted-foreground">No validated detector result. Visual realism is not evidence of camera origin.</p></div>
                     <div className="mt-3 flex items-center justify-between font-mono text-[10px] uppercase text-muted-foreground">
                       <span>{result.mediaType}</span><span>{result.analysisTime}s</span>
                     </div>
                   </div>
                   <UncertaintyIndicator trustScore={result.trustScore} uncertaintyFlag={result.uncertaintyFlag} uncertaintyReason={result.uncertaintyReason} />
-                  <DownloadReportButton result={result} evidenceObjects={evidenceObjects} chainOfCustody={chainOfCustody} />
+                  <DownloadReportButton result={result} evidenceObjects={evidenceObjects} chainOfCustody={chainOfCustody} fileName={selectedFile?.name} />
                 </div>
               ) : (
                 <div className="rounded border border-border bg-background p-4 text-sm text-muted-foreground">
@@ -168,7 +169,7 @@ const DemoSection = () => {
               <div id="method" className="border-t border-border pt-4">
                 <div className="mb-2 flex items-center gap-2 text-xs font-medium"><CheckCircle2 className="h-3.5 w-3.5 text-success" /> Scope disclosure</div>
                 <p className="text-xs leading-relaxed text-muted-foreground">
-                  Results are probabilistic model observations, not proof of authenticity. File hashing is directly measured; analytical findings require expert review.
+                  Visual review is unvalidated and may miss convincing AI images. No authenticity probability is available. SHA-256 identifies file bytes, not truth or origin.
                 </p>
               </div>
             </div>
@@ -179,7 +180,7 @@ const DemoSection = () => {
           {result && (
             <div id="reports" className="mt-5 border border-border bg-card p-4 animate-fade-in-up md:p-6">
               {/* Investigation Mode Toggle */}
-              <div className="flex items-center justify-between mb-6">
+              {result.originStatus !== "indeterminate" && <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-2">
                   <Search className="w-4 h-4 text-primary" />
                   <span className="text-sm font-medium">Investigation Mode</span>
@@ -188,9 +189,22 @@ const DemoSection = () => {
                   checked={investigationMode}
                   onCheckedChange={setInvestigationMode}
                 />
-              </div>
+              </div>}
 
-              {investigationMode ? (
+              {result.originStatus === "indeterminate" ? (
+                <Tabs defaultValue="evidence" className="w-full">
+                  <TabsList className="mb-5 flex h-auto flex-wrap justify-start gap-1">
+                    <TabsTrigger value="evidence">Evidence</TabsTrigger>
+                    <TabsTrigger value="signals">Signals</TabsTrigger>
+                    <TabsTrigger value="timeline">Timeline</TabsTrigger>
+                    <TabsTrigger value="report">Report</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="evidence"><AssessmentReview result={result} fileHash={fileHash} /></TabsContent>
+                  <TabsContent value="signals" className="space-y-5">{["Deepfake detectors & consensus", "Frequency, texture & structure", "Robustness & transformed-image testing", "C2PA, source matching & EXIF", "Heatmap & generator attribution", "Benchmark calibration"].map(title => <NotPerformed key={title} title={title} />)}</TabsContent>
+                  <TabsContent value="timeline"><NotPerformed title="Frame extraction & audio forensics" /></TabsContent>
+                  <TabsContent value="report" className="space-y-5"><ChainOfCustody metadata={chainOfCustody} /><p className="text-sm text-muted-foreground">The report records model observations separately from the measured file hash, with unavailable checks disclosed.</p><DownloadReportButton result={result} evidenceObjects={evidenceObjects} chainOfCustody={chainOfCustody} fileName={selectedFile?.name} /></TabsContent>
+                </Tabs>
+              ) : investigationMode ? (
                 /* ======= INVESTIGATION MODE LAYOUT ======= */
                 <div className="space-y-8">
                   {/* Layer 1: Instant Verdict */}

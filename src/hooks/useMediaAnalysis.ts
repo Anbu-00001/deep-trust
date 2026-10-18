@@ -1,4 +1,6 @@
 import { useState, useMemo } from "react";
+import { applyAssessmentPolicy } from "../../supabase/functions/_shared/assessment-policy";
+import { FunctionsHttpError } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAnalysisCache } from "@/hooks/useAnalysisCache";
@@ -85,6 +87,12 @@ export interface ManipulationRegion {
 }
 
 export interface AnalysisResult {
+  assessmentVersion?: string;
+  originStatus?: "indeterminate";
+  authenticityProbability?: null;
+  calibrationStatus?: "not_validated";
+  visualSummary?: string;
+  modelUsed?: string;
   trustScore: number;
   riskLevel: "low" | "medium" | "high";
   verdict: string;
@@ -186,6 +194,12 @@ export const useMediaAnalysis = () => {
       });
 
       if (fnError) {
+        if (fnError instanceof FunctionsHttpError) {
+          const details = await fnError.context.text();
+          let message = details;
+          try { message = JSON.parse(details).error || details; } catch { /* Keep failure details. */ }
+          throw new Error(message);
+        }
         throw new Error(fnError.message || "Analysis failed");
       }
 
@@ -194,9 +208,10 @@ export const useMediaAnalysis = () => {
       }
 
       // Step 4: Cache result
-      setCached(hash, data);
-      setResult(data);
-      return data;
+      const safeResult = { ...data, ...applyAssessmentPolicy(data), modelUsed: data.modelUsed, mediaType: data.mediaType, analysisTime: data.analysisTime, visualSummary: data.visualSummary || applyAssessmentPolicy(data).visualSummary };
+      setCached(hash, safeResult);
+      setResult(safeResult);
+      return safeResult;
 
     } catch (err) {
       const message = err instanceof Error ? err.message : "Analysis failed";
