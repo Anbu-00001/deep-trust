@@ -1,15 +1,14 @@
 /**
  * Main-thread wrapper around the detector inference worker.
  *
- * Keeps a single worker instance alive for the session, forwards granular
- * progress (model download, digest verification, inference), and starts
- * warming the model cache during idle time so later analyses run without a
- * download.
+ * Keeps a single worker instance alive for the session, serializes runs
+ * (a warm-up never blocks or fails a real analysis), and forwards granular
+ * progress (model download, digest verification, inference).
  */
 import type { LocalDetectorSignals } from "./detectorModels";
 
 export type DetectorProgress = {
-  stage: "download" | "verify" | "load" | "infer" | "warming";
+  stage: "download" | "verify" | "load" | "infer";
   label: string;
   percent: number | null;
 };
@@ -22,11 +21,12 @@ let worker: Worker | null = null;
 let workerFailed = false;
 
 type Pending = {
-  resolve: (result: DetectorRunResult) => void;
-  onProgress: (progress: DetectorProgress) => void;
+  resolve: (result: DetectorRunResult | "warm-done") => void;
+  onProgress?: (progress: DetectorProgress) => void;
 };
 
 let pending: Pending | null = null;
+let queue: Promise<unknown> = Promise.resolve();
 
 function stageLabel(stage: DetectorProgress["stage"], modelShortName: string): string {
   switch (stage) {
@@ -34,7 +34,6 @@ function stageLabel(stage: DetectorProgress["stage"], modelShortName: string): s
     case "verify": return `Verifying ${modelShortName} SHA-256`;
     case "load": return `Loading ${modelShortName} into runtime`;
     case "infer": return `Running ${modelShortName} inference`;
-    case "warming": return `Preparing ${modelShortName} engine`;
   }
 }
 
@@ -46,54 +45,68 @@ function getWorker(): Worker {
     const data = event.data as
       | { type: "stage"; stage: DetectorProgress["stage"]; modelShortName: string; percent: number | null }
       | { type: "done"; signals: LocalDetectorSignals }
+      | { type: "warm-done" }
       | { type: "error"; message: string };
-    if (!pending) return;
-    if (data.type === "stage") {
-      pending.onProgress({ stage: data.type === "stage" ? data.stage : "infer", label: stageLabel(data.stage, data.modelShortName), percent: data.percent });
+    const current = pending;
+    pending = null;
+    if (!current) return;
+    if (data.type === "stage" && current.onProgress) {
+      current.onProgress({ stage: data.stage, label: stageLabel(data.stage, data.modelShortName), percent: data.percent });
+      pending = current;
     } else if (data.type === "done") {
-      const { resolve, onProgress } = pending;
-      pending = null;
-      onProgress({ stage: "infer", label: "Detector inference complete", percent: 1 });
-      resolve({ status: "measured", signals: data.signals });
+      current.onProgress?.({ stage: "infer", label: "Detector inference complete", percent: 1 });
+      current.resolve({ status: "measured", signals: data.signals });
+    } else if (data.type === "warm-done") {
+      current.resolve("warm-done");
     } else if (data.type === "error") {
-      const { resolve } = pending;
-      pending = null;
-      resolve({ status: "failed", reason: data.message });
+      current.resolve({ status: "failed", reason: data.message });
     }
   };
   worker.onerror = (event) => {
     workerFailed = true;
     worker = null;
     if (pending) {
-      const { resolve } = pending;
+      const current = pending;
       pending = null;
-      resolve({ status: "failed", reason: event.message || "Local detector engine failed to start." });
+      current.resolve({ status: "failed", reason: event.message || "Local detector engine failed to start." });
     }
   };
   return worker;
 }
 
+/** Serializes worker jobs so a background warm-up and a live analysis queue instead of racing. */
+function enqueue<T>(task: () => Promise<T>): Promise<T> {
+  const run = queue.then(task, task);
+  queue = run.then(
+    () => undefined,
+    () => undefined
+  );
+  return run;
+}
+
+function postJob(message: { type: "detect"; file: File } | { type: "warm" }, onProgress?: (progress: DetectorProgress) => void): Promise<DetectorRunResult | "warm-done"> {
+  const localWorker = getWorker();
+  return new Promise<DetectorRunResult | "warm-done">((resolve) => {
+    pending = { resolve, onProgress };
+    localWorker.postMessage(message);
+  });
+}
+
 /**
  * Runs every pinned detector against one image file on-device.
- * Never throws: a failure is reported as { status: "failed" } so the rest of
+ * Never throws: a failure resolves as { status: "failed" } so the rest of
  * the assessment pipeline can continue and disclose the gap honestly.
  */
 export function runLocalDetectors(file: File, onProgress: (progress: DetectorProgress) => void): Promise<DetectorRunResult> {
   if (!(file.type || "").startsWith("image/")) {
     return Promise.resolve({ status: "failed", reason: "Local detectors apply to still images only." });
   }
-  let localWorker: Worker;
-  try {
-    localWorker = getWorker();
-  } catch (error) {
-    return Promise.resolve({ status: "failed", reason: error instanceof Error ? error.message : "Local detector engine is unavailable." });
-  }
-  if (pending) {
-    return Promise.resolve({ status: "failed", reason: "A detector run is already in progress." });
-  }
-  return new Promise<DetectorRunResult>((resolve) => {
-    pending = { resolve, onProgress };
-    localWorker.postMessage({ type: "detect", file });
+  return enqueue(async () => {
+    try {
+      return (await postJob({ type: "detect", file }, onProgress)) as DetectorRunResult;
+    } catch (error) {
+      return { status: "failed", reason: error instanceof Error ? error.message : "Local detector engine failed." };
+    }
   });
 }
 
@@ -106,8 +119,13 @@ let warmed = false;
 export function warmDetectorCache(): void {
   if (warmed || typeof window === "undefined") return;
   warmed = true;
-  const sample = new File([new Uint8Array([0x89, 0x50, 0x4e, 0x47])], "warmup.png", { type: "image/png" });
   window.setTimeout(() => {
-    runLocalDetectors(sample, () => {}).catch(() => undefined);
+    enqueue(async () => {
+      try {
+        await postJob({ type: "warm" });
+      } catch {
+        // A failed warm-up is surfaced on the next real analysis.
+      }
+    });
   }, 2500);
 }
