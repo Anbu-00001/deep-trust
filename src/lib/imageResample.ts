@@ -37,24 +37,26 @@ export function kernelFor(filter: "bicubic" | "bilinear"): Kernel {
  */
 function buildWeights(srcLen: number, dstLen: number, kernel: Kernel): { starts: Int32Array; indices: Int32Array; weights: Float32Array; window: number } {
   const scale = srcLen / dstLen;
+  // PIL resize uses fixed-support kernels (bicubic: 4 effective taps,
+  // bilinear: 2) regardless of scale factor — no antialias pass.
   const support = kernel === cubicKernel ? 2 : 1;
-  const window = Math.max(1, Math.ceil(support * Math.max(1, scale)) + 2) * 2;
+  const window = support * 2 + 2;
   const starts = new Int32Array(dstLen);
   const indices = new Int32Array(dstLen * window);
   const weights = new Float32Array(dstLen * window);
 
   for (let out = 0; out < dstLen; out++) {
     const center = (out + 0.5) * scale - 0.5;
-    const start = Math.floor(center - support * Math.max(1, scale) * 0.5 - 0.5);
+    const start = Math.floor(center) - support;
     starts[out] = start;
     let sum = 0;
-    let count = 0;
+    let any = false;
     for (let j = 0; j < window; j++) {
-      const w = kernel((j + start - center) / Math.max(1, scale));
+      const w = kernel(j + start - center);
       if (w !== 0) {
         weights[out * window + j] = w;
         sum += w;
-        count++;
+        any = true;
       }
     }
     for (let j = 0; j < window; j++) {
@@ -62,7 +64,7 @@ function buildWeights(srcLen: number, dstLen: number, kernel: Kernel): { starts:
       indices[out * window + j] = idx < 0 ? 0 : idx >= srcLen ? srcLen - 1 : idx;
       if (sum !== 0 && weights[out * window + j] !== 0) weights[out * window + j] /= sum;
     }
-    if (count === 0) {
+    if (!any) {
       // Degenerate mapping: fall back to nearest sample.
       const idx = center < 0 ? 0 : center >= srcLen ? srcLen - 1 : Math.round(center);
       indices[out * window] = idx;
