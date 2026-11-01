@@ -172,10 +172,16 @@ async function detect(file: File): Promise<LocalDetectorSignals> {
 }
 
 self.onmessage = async (event: MessageEvent<{ type: string; file?: File }>) => {
-  if (event.data?.type !== "detect" || !(event.data.file instanceof File)) return;
+  const data = event.data;
+  if (!data?.type) return;
   try {
-    post({ type: "done", signals: await detect(event.data.file) });
+    if (data.type === "detect" && data.file instanceof File) {
+      post({ type: "done", signals: await detect(data.file) });
+    } else if (data.type === "warm") {
+      for (const spec of DETECTOR_MODELS) await getSession(spec);
+      post({ type: "warm-done" });
+    }
   } catch (error) {
-    post({ type: "error", message: error instanceof Error ? error.message : "Local detector inference failed." });
+    post({ type: "error", message: error instanceof Error ? error.message : "Local detector engine failed." });
   }
 };
