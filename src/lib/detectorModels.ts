@@ -38,6 +38,56 @@ export interface DetectorModelSpec {
   license: string;
 }
 
+export interface LocalDetectorSignal {
+  modelId: string;
+  modelName: string;
+  version: string;
+  /** Raw, uncalibrated model output P(AI) in [0,1]. */
+  probabilityAi: number;
+  threshold: number;
+  latencyMs: number;
+  sha256Verified: boolean;
+}
+
+export interface LocalDetectorSignals {
+  ranAt: string;
+  runtime: string;
+  models: LocalDetectorSignal[];
+  consensus: {
+    meanProbabilityAi: number;
+    agreement: "agree_high" | "agree_low" | "disagree" | "single";
+  };
+}
+
+export type DetectorSignalBand = "ai_indicated" | "camera_consistent" | "inconclusive";
+
+/**
+ * Interprets measured detector signals. Even when every detector agrees, the
+ * result is a signal band, never a verdict: origin stays "not established".
+ */
+export function interpretDetectorSignals(signals: LocalDetectorSignals): { band: DetectorSignalBand; label: string; explanation: string } {
+  const { agreement } = signals.consensus;
+  if (agreement === "agree_high") {
+    return {
+      band: "ai_indicated",
+      label: "AI-generation signal detected",
+      explanation: "All local detectors scored above their published decision threshold. This is a strong indicator, not proof — treat the file as likely synthetic pending source verification.",
+    };
+  }
+  if (agreement === "agree_low") {
+    return {
+      band: "camera_consistent",
+      label: "No AI-generation signal",
+      explanation: "All local detectors scored low. Detectors miss some new generators and edited images, so this does not establish camera origin.",
+    };
+  }
+  return {
+    band: "inconclusive",
+    label: "Detectors disagree or are uncertain",
+    explanation: "Scores fall between thresholds or the detectors disagree. Treat as inconclusive and verify the original source.",
+  };
+}
+
 export const DETECTOR_RUNTIME = "onnxruntime-web (WebAssembly, single thread)";
 
 export const DETECTOR_MODELS: DetectorModelSpec[] = [

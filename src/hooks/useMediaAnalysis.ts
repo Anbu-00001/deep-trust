@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import { useAnalysisCache } from "@/hooks/useAnalysisCache";
 import { generateEvidenceObjects, buildChainOfCustody } from "@/lib/forensicEvidence";
 import type { ForensicEvidenceObject, ChainOfCustodyMetadata } from "@/lib/forensicEvidence";
+import { runLocalDetectors, type DetectorProgress } from "@/lib/detectorEngine";
+import type { LocalDetectorSignals } from "@/lib/detectorModels";
 
 export interface HeatmapRegion {
   x: number;
@@ -129,6 +131,8 @@ export interface AnalysisResult {
   visualDeepfakeDetection?: VisualDeepfakeDetection;
   confidenceDrift?: ConfidenceDrift;
   manipulationRegions?: ManipulationRegion[];
+  localDetectors?: LocalDetectorSignals | null;
+  localDetectorFailure?: string | null;
 }
 
 export const useMediaAnalysis = () => {
@@ -137,6 +141,7 @@ export const useMediaAnalysis = () => {
   const [error, setError] = useState<string | null>(null);
   const [fileHash, setFileHash] = useState<string | null>(null);
   const [cachedHit, setCachedHit] = useState(false);
+  const [detectorProgress, setDetectorProgress] = useState<DetectorProgress | null>(null);
 
   const { getFileHash, getCached, setCached } = useAnalysisCache();
 
@@ -186,12 +191,16 @@ export const useMediaAnalysis = () => {
         reader.readAsDataURL(file);
       });
 
+      // Local detectors and the remote visual review run in parallel.
+      const detectorRun = runLocalDetectors(file, setDetectorProgress);
       const { data, error: fnError } = await supabase.functions.invoke("analyze-media", {
         body: {
           imageBase64: base64,
           mediaType: file.type.split("/")[0]
         }
       });
+      const detectorResult = await detectorRun;
+      setDetectorProgress(null);
 
       if (fnError) {
         if (fnError instanceof FunctionsHttpError) {
@@ -208,7 +217,9 @@ export const useMediaAnalysis = () => {
       }
 
       // Step 4: Cache result
-      const safeResult = { ...data, ...applyAssessmentPolicy(data), modelUsed: data.modelUsed, mediaType: data.mediaType, analysisTime: data.analysisTime, visualSummary: data.visualSummary || applyAssessmentPolicy(data).visualSummary };
+      const safeResult = { ...data, ...applyAssessmentPolicy(data), modelUsed: data.modelUsed, mediaType: data.mediaType, analysisTime: data.analysisTime, visualSummary: data.visualSummary || applyAssessmentPolicy(data).visualSummary,
+        localDetectors: detectorResult.status === "measured" ? detectorResult.signals : null,
+        localDetectorFailure: detectorResult.status === "failed" ? detectorResult.reason : null };
       setCached(hash, safeResult);
       setResult(safeResult);
       return safeResult;
@@ -219,6 +230,7 @@ export const useMediaAnalysis = () => {
       toast.error(message);
       return null;
     } finally {
+      setDetectorProgress(null);
       setIsAnalyzing(false);
     }
   };
@@ -238,6 +250,7 @@ export const useMediaAnalysis = () => {
     reset,
     fileHash,
     cachedHit,
+    detectorProgress,
     evidenceObjects,
     chainOfCustody,
   };
