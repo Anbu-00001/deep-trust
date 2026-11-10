@@ -1,4 +1,4 @@
-export const ASSESSMENT_VERSION = "visual-review-v2";
+export const ASSESSMENT_VERSION = "visual-review-v3-local-detectors";
 
 export interface ReviewObservation {
   type: "positive" | "neutral" | "concern";
